@@ -308,15 +308,7 @@
   </div>
 
   <div class="controls">
-    <label for="nsel" class="skip">Simulation count</label>
-    <select id="nsel">
-      <option value="5000">5k sims</option>
-      <option value="20000" selected>20k sims</option>
-      <option value="50000">50k sims</option>
-    </select>
-    <button class="btn alt" id="refresh" type="button">↻ Re-run Simulation</button>
-    <button class="btn alt" id="clear" type="button">🗑 Clear Cache</button>
-    <p class="disc">⚠️ Probabilities are a heuristic Monte-Carlo model (team strength ratings + current standings) — an estimate, not official odds.</p>
+    <p class="disc">⚠️ Probabilities are a heuristic model (team strength + current standings) — an estimate, not official odds.</p>
   </div>
 
   <footer>
@@ -499,7 +491,8 @@ function runSim(N){
 
 /* ===================== CACHE ===================== */
 const PFX='wc26_', TTL=3600*1000;
-function simKey(){return PFX+'sim_'+document.getElementById('nsel').value;}
+const SIM_N=20000;
+function simKey(){return PFX+'sim_'+SIM_N;}
 function getSim(){ try{const o=JSON.parse(localStorage.getItem(simKey())); if(o&&Date.now()-o.ts<TTL)return o;}catch(e){} return null; }
 function setSim(data){ try{localStorage.setItem(simKey(),JSON.stringify({ts:Date.now(),data}));}catch(e){} }
 function clearCache(){ Object.keys(localStorage).filter(k=>k.startsWith(PFX)).forEach(k=>localStorage.removeItem(k)); }
@@ -511,7 +504,7 @@ function pct(x){return (x*100).toFixed(x>=0.1?0:1)+'%';}
 
 function ensureSim(force){
  if(!force){ const c=getSim(); if(c){ SIM=c.data; $('status').textContent=''; return; } }
- const N=+$('nsel').value; $('status').innerHTML=`⏳ Running ${N.toLocaleString()} simulations…`;
+ const N=SIM_N; $('status').innerHTML='⏳ Crunching the odds…';
  // let the status paint before the heavy loop
  SIM=runSim(N); setSim(SIM);
  $('status').textContent='';
@@ -692,9 +685,6 @@ $('q').addEventListener('keydown',e=>{
  }
  if(e.key==='Enter') $('go').click();
 });
-$('refresh').onclick=()=>{ boot(true); };
-$('nsel').onchange=()=>{ boot(false); };
-$('clear').onclick=()=>{ clearCache(); $('status').innerHTML='🗑 Cache cleared — re-running…'; setTimeout(()=>boot(true),30); };
 // initial paint (defer heavy sim so the page shows first)
 $('status').innerHTML='⏳ Preparing…';
 setTimeout(()=>boot(false),30);
