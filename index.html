@@ -188,6 +188,32 @@
   .legend span{display:inline-flex;align-items:center;gap:6px}
   .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
 
+  /* full bracket */
+  .fullbracket{display:flex;align-items:stretch;gap:10px;overflow-x:auto;padding:4px 0 12px;
+    scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+  .fullbracket::-webkit-scrollbar{height:8px}
+  .fullbracket::-webkit-scrollbar-thumb{background:#2a5246;border-radius:8px}
+  .fullbracket::-webkit-scrollbar-track{background:#0a1714;border-radius:8px}
+  .fbcol{flex:0 0 auto;width:150px;display:flex;flex-direction:column;scroll-snap-align:start}
+  .fbcol.r32,.fbcol.r32r{width:168px}
+  .fbcol>h4{font-family:var(--disp);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);text-align:center;margin:0 0 6px}
+  .fbcol .body{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:8px}
+  .fbmatch{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+  .fbmatch .mlabel{font-size:8.5px;color:var(--dim);font-weight:800;letter-spacing:.04em;margin-bottom:3px}
+  .fbmatch.r32{cursor:pointer}
+  .fbmatch.r32:hover{border-color:var(--grass)}
+  .fbteam{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:11.5px}
+  .fbteam .fl{font-size:13px;width:16px;text-align:center;flex:0 0 auto}
+  .fbteam .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fbteam .pc{font-weight:800;font-variant-numeric:tabular-nums;color:var(--dim);flex:0 0 auto}
+  .fbteam.fav .nm{font-weight:800;color:var(--txt)}
+  .fbteam.fav .pc{color:var(--grass)}
+  .fbplace{color:var(--dim);font-style:italic;font-size:11px;padding:3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fbmatch.final{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+  .fbpred{display:none;margin-top:5px;padding-top:5px;border-top:1px dashed var(--line);
+    color:var(--grass);font-weight:700;font-size:10.5px}
+  .fbmatch.open .fbpred{display:block}
+
   /* controls + footer */
   .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0 16px}
   select{background:var(--surface2);border:1px solid var(--line);color:var(--txt);border-radius:12px;
@@ -235,6 +261,12 @@
 
   <section id="detail" class="panel" aria-label="Selected team"></section>
 
+  <section class="panel" aria-label="Full bracket">
+    <h2>🗺️ Full Bracket <span class="sub">As it stands — win % for each decided Round-of-32 tie</span></h2>
+    <p class="hint">Slots aren't final, so they update after every match. Third-place qualifiers are projected by points (tiebreaks not modelled). Tap a Round-of-32 tie for the predicted score.</p>
+    <div class="bracketwrap"><div class="scrollhint">← swipe across the bracket →</div><div id="fullbracket" class="fullbracket"></div></div>
+  </section>
+
   <div class="board">
     <section class="panel" aria-label="Title race">
       <h2>🥇 Title Race <span class="sub">Championship probability — tap a team</span></h2>
@@ -264,6 +296,7 @@
     <a href="https://en.wikipedia.org/wiki/2026_FIFA_World_Cup">Wikipedia — 2026 FIFA World Cup</a>,
     <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/standings">FIFA standings</a>.
     Group results &amp; ratings are editable in the file's <code>DATA</code> section.
+    <br>Made with <span style="color:var(--grass)">♥</span> by Nico Vincent.
   </footer>
 </main>
 
@@ -443,12 +476,11 @@ const $=id=>document.getElementById(id);
 function pct(x){return (x*100).toFixed(x>=0.1?0:1)+'%';}
 
 function ensureSim(force){
- if(!force){ const c=getSim(); if(c){ SIM=c.data; const mins=Math.round((Date.now()-c.ts)/60000);
-   $('status').innerHTML=`✅ Showing cached simulation (${$('nsel').value} runs, saved ${mins} min ago · expires after 1 h).`; return; } }
+ if(!force){ const c=getSim(); if(c){ SIM=c.data; $('status').textContent=''; return; } }
  const N=+$('nsel').value; $('status').innerHTML=`⏳ Running ${N.toLocaleString()} simulations…`;
  // let the status paint before the heavy loop
  SIM=runSim(N); setSim(SIM);
- $('status').innerHTML=`✅ Ran ${N.toLocaleString()} simulations and cached for 1 hour.`;
+ $('status').textContent='';
 }
 
 const REDUCED=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -512,7 +544,52 @@ function selectTeam(team,scn){
  $('detail').scrollIntoView({behavior:REDUCED()?'auto':'smooth',block:'start'});
 }
 
-function boot(force){ ensureSim(force); renderLeaderboard(); renderGroups(); if(SELECTED) selectTeam(SELECTED); }
+/* ---- full two-sided bracket ---- */
+const FB_COLS=[
+ {key:'r32',title:'Round of 32',ms:[74,77,73,75,83,84,81,82]},
+ {key:'r16',title:'Round of 16',ms:[89,90,93,94]},
+ {key:'qf',title:'Quarter-finals',ms:[97,98]},
+ {key:'sf',title:'Semi-finals',ms:[101]},
+ {key:'fin',title:'Final',ms:[104]},
+ {key:'sfr',title:'Semi-finals',ms:[102]},
+ {key:'qfr',title:'Quarter-finals',ms:[99,100]},
+ {key:'r16r',title:'Round of 16',ms:[91,92,95,96]},
+ {key:'r32r',title:'Round of 32',ms:[76,78,79,80,86,88,85,87]}
+];
+function projThirds(){
+ const pool=GL.map(g=>({g,t:cur(g,3),pts:GROUPS[g][2][1]}));
+ pool.sort((a,b)=>b.pts-a.pts||rt(b.t)-rt(a.t));
+ const top8=pool.slice(0,8), alloc=allocThirds(top8.map(x=>x.g)), byG={};
+ top8.forEach(x=>byG[x.g]=x.t);
+ const out={}; THIRD_SLOTS.forEach(m=>out[m]=alloc[m]?byG[alloc[m]]:top8[0].t);
+ return out;
+}
+function predScore(a,b){ const d=rt(a)-rt(b),ad=Math.abs(d); let hi,lo;
+ if(ad>260){hi=3;lo=0;}else if(ad>150){hi=2;lo=0;}else if(ad>60){hi=2;lo=1;}else{hi=1;lo=1;}
+ const sa=d>=0?hi:lo, sb=d>=0?lo:hi;
+ return `🔮 ${a} ${sa}–${sb} ${b}${ad<=60?' (likely pens)':''}`; }
+function renderFullBracket(){
+ const ts=projThirds();
+ const res=(s,m)=> s.type==='Win'?cur(s.grp,1): s.type==='RU'?cur(s.grp,2): ts[m];
+ const r32t=m=>{const[s1,s2]=R32[m];return[res(s1,m),res(s2,m)];};
+ const fl=t=>FLAG[t]||'🏳️';
+ function box(m){
+   if(R32[m]){ const[t1,t2]=r32t(m), p=pWin(t1,t2);
+     return `<div class="fbmatch r32" data-m="${m}"><div class="mlabel">M${m}</div>`+
+       `<div class="fbteam ${p>=.5?'fav':''}"><span class="fl">${fl(t1)}</span><span class="nm">${t1}</span><span class="pc">${pct(p)}</span></div>`+
+       `<div class="fbteam ${p<.5?'fav':''}"><span class="fl">${fl(t2)}</span><span class="nm">${t2}</span><span class="pc">${pct(1-p)}</span></div>`+
+       `<div class="fbpred">${predScore(t1,t2)}</div></div>`;
+   }
+   const[a,b]=FEED[m], fin=m===104;
+   const line=c=>{ if(R32[c]){const[x,y]=r32t(c);return `${x} / ${y}`;} return 'Winner of match '+c; };
+   return `<div class="fbmatch ${fin?'final':''}"><div class="mlabel">M${m}${fin?' · FINAL':''}</div>`+
+     `<div class="fbplace">${line(a)}</div><div class="fbplace">${line(b)}</div></div>`;
+ }
+ $('fullbracket').innerHTML=FB_COLS.map(c=>`<div class="fbcol ${c.key}"><h4>${c.title}</h4><div class="body">${c.ms.map(box).join('')}</div></div>`).join('');
+ $('fullbracket').querySelectorAll('.fbmatch.r32').forEach(el=>el.onclick=()=>el.classList.toggle('open'));
+}
+
+function boot(force){ ensureSim(force); renderFullBracket(); renderLeaderboard(); renderGroups(); if(SELECTED) selectTeam(SELECTED); }
 $('go').onclick=()=>{ acClose(); const t=findTeam($('q').value); if(t)selectTeam(t); else $('status').textContent='No matching country — try a full name like “Brazil” or “United States”.'; };
 
 /* ---- autocomplete ---- */
