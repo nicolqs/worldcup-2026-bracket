@@ -189,8 +189,10 @@
   .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
 
   /* full bracket */
-  .fullbracket{display:flex;align-items:stretch;gap:10px;overflow-x:auto;padding:4px 0 12px;
+  .fullbracket{position:relative;display:flex;align-items:stretch;gap:10px;overflow-x:auto;padding:4px 0 12px;
     scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+  .fbsvg{position:absolute;top:0;left:0;pointer-events:none;z-index:0}
+  .fbcol{position:relative;z-index:1}
   .fullbracket::-webkit-scrollbar{height:8px}
   .fullbracket::-webkit-scrollbar-thumb{background:#2a5246;border-radius:8px}
   .fullbracket::-webkit-scrollbar-track{background:#0a1714;border-radius:8px}
@@ -612,11 +614,30 @@ function renderFullBracket(){
    }
    const[a,b]=FEED[m], fin=m===104;
    const line=c=>{ if(R32[c]){const[x,y]=r32t(c);return `${x} / ${y}`;} return 'Winner M'+c; };
-   return `<div class="fbmatch ${fin?'final':''}"><div class="mlabel">M${m}${fin?' · FINAL':''}</div>`+
+   return `<div class="fbmatch ${fin?'final':''}" data-m="${m}"><div class="mlabel">M${m}${fin?' · FINAL':''}</div>`+
      `<div class="fbplace">${line(a)}</div><div class="fbplace">${line(b)}</div></div>`;
  }
  $('fullbracket').innerHTML=FB_COLS.map(c=>`<div class="fbcol ${c.key}"><h4>${c.title}</h4><div class="body">${c.ms.map(box).join('')}</div></div>`).join('');
  $('fullbracket').querySelectorAll('.fbmatch.r32').forEach(el=>el.onclick=()=>el.classList.toggle('open'));
+ requestAnimationFrame(()=>{drawConnectors(); setTimeout(drawConnectors,350);});
+ if(!window.__fbR){ window.__fbR=1; let to; addEventListener('resize',()=>{clearTimeout(to);to=setTimeout(drawConnectors,150);}); }
+}
+function drawConnectors(){
+ const fb=$('fullbracket'); if(!fb)return;
+ let svg=fb.querySelector('svg.fbsvg');
+ if(!svg){ svg=document.createElementNS('http://www.w3.org/2000/svg','svg'); svg.setAttribute('class','fbsvg'); fb.prepend(svg); }
+ const base=fb.getBoundingClientRect(), W=fb.scrollWidth, H=fb.scrollHeight;
+ svg.setAttribute('width',W); svg.setAttribute('height',H); svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+ const pos=el=>{const r=el.getBoundingClientRect();return{l:r.left-base.left+fb.scrollLeft,t:r.top-base.top,w:r.width,h:r.height};};
+ let d='';
+ Object.keys(FEED).forEach(m=>{ const el=fb.querySelector(`.fbmatch[data-m="${m}"]`); if(!el)return; const P=pos(el), py=P.t+P.h/2;
+   FEED[m].forEach(f=>{ const fe=fb.querySelector(`.fbmatch[data-m="${f}"]`); if(!fe)return; const F=pos(fe), fy=F.t+F.h/2;
+     let fx,px; if(F.l<P.l){ fx=F.l+F.w; px=P.l; } else { fx=F.l; px=P.l+P.w; }
+     const mx=(fx+px)/2;
+     d+=`M${fx.toFixed(1)} ${fy.toFixed(1)} H${mx.toFixed(1)} V${py.toFixed(1)} H${px.toFixed(1)} `;
+   });
+ });
+ svg.innerHTML=`<path d="${d}" fill="none" stroke="rgba(143,166,156,.4)" stroke-width="1.5"/>`;
 }
 
 function boot(force){ ensureSim(force); renderFullBracket(); renderLeaderboard(); renderGroups(); if(SELECTED) selectTeam(SELECTED); }
