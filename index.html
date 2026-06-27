@@ -214,6 +214,16 @@
   .fbpred{display:none;margin-top:5px;padding-top:5px;border-top:1px dashed var(--line);
     color:var(--grass);font-weight:700;font-size:10.5px}
   .fbmatch.open .fbpred{display:block}
+  /* accordion (mobile shows summary; desktop always open) */
+  .fbacc{margin-top:4px}
+  .fbsummary{display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;list-style:none;
+    background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:13px 16px;
+    font-weight:800;color:var(--sky);min-height:48px;touch-action:manipulation}
+  .fbsummary::-webkit-details-marker{display:none}
+  .fbsummary::after{content:'▾';font-size:12px}
+  #fbDetails[open] .fbsummary::after{content:'▴'}
+  .fbbody{margin-top:12px}
+  @media(min-width:1080px){ .fbsummary{display:none} #fbDetails>.fbbody{display:block!important} }
   /* laptop/desktop: fit all 9 columns, no horizontal scroll */
   @media(min-width:1080px){
     .fullbracket{overflow-x:visible;gap:7px}
@@ -275,9 +285,14 @@
   <section id="detail" class="panel" aria-label="Selected team"></section>
 
   <section class="panel" aria-label="Full bracket">
-    <h2>🗺️ Full Bracket <span class="sub">As it stands — win % for each decided Round-of-32 tie</span></h2>
-    <p class="hint">Slots aren't final, so they update after every match. Third-place qualifiers are projected by points (tiebreaks not modelled). Tap a Round-of-32 tie for the predicted score.</p>
-    <div class="bracketwrap"><div class="scrollhint">← swipe across the bracket →</div><div id="fullbracket" class="fullbracket"></div></div>
+    <h2>🗺️ Full Bracket <span class="sub">As it stands — win % for each decided Round-of-32 match</span></h2>
+    <p class="hint">Slots aren't final, so they update after every match. Third-place qualifiers are projected by points (tiebreaks not modelled). Tap a Round-of-32 match for the predicted score.</p>
+    <details id="fbDetails" class="fbacc">
+      <summary class="fbsummary">View full bracket</summary>
+      <div class="fbbody">
+        <div class="bracketwrap"><div class="scrollhint">← swipe across the bracket →</div><div id="fullbracket" class="fullbracket"></div></div>
+      </div>
+    </details>
   </section>
 
   <div class="board">
@@ -620,6 +635,7 @@ function renderFullBracket(){
  $('fullbracket').querySelectorAll('.fbmatch.r32').forEach(el=>el.onclick=()=>el.classList.toggle('open'));
  requestAnimationFrame(()=>{drawConnectors(); setTimeout(drawConnectors,350);});
  if(!window.__fbR){ window.__fbR=1; let to; addEventListener('resize',()=>{clearTimeout(to);to=setTimeout(drawConnectors,150);}); }
+ const det=$('fbDetails'); if(det && !det.__w){ det.__w=1; det.addEventListener('toggle',()=>{ if(det.open) requestAnimationFrame(drawConnectors); }); }
 }
 function drawConnectors(){
  const fb=$('fullbracket'); if(!fb)return;
