@@ -4,26 +4,26 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="description" content="Pick any of the 48 teams at the 2026 FIFA World Cup to see its possible knockout opponents, what-if paths, and model-based win probability." />
-<meta name="theme-color" content="#0a0e1a" />
+<meta name="theme-color" content="#08130f" />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="World Cup 2026 — Bracket & Win Probability" />
 <meta property="og:description" content="Knockout bracket explorer and Monte-Carlo win probabilities for all 48 teams." />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23ff2d6b'/><stop offset='.5' stop-color='%23ff7a1a'/><stop offset='1' stop-color='%23ffc23d'/></linearGradient></defs><circle cx='24' cy='24' r='22' fill='url(%23g)'/><circle cx='24' cy='24' r='11' fill='%23fff'/><polygon points='24,18 29,22 27,28 21,28 19,22' fill='%23180a04'/></svg>" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2319b86b'/><stop offset='1' stop-color='%232ea6ff'/></linearGradient></defs><circle cx='24' cy='24' r='22' fill='url(%23g)'/><text x='24' y='34' font-size='28' text-anchor='middle'>⚽</text></svg>" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800;900&display=swap" />
 <title>World Cup 2026 — Bracket & Win Probability</title>
 <style>
   :root{
-    --ink:#0a0e1a; --surface:#141a2e; --surface2:#0d1326; --line:#283250; --txt:#eef2ff; --dim:#97a1c0;
-    --hot:#ff2d6b; --flame:#ff7a1a; --gold:#ffc23d; --grass:#21c87a; --sky:#36c5ff; --violet:#8b5cf6;
-    --grad:linear-gradient(90deg,var(--hot),var(--flame),var(--gold));
+    --ink:#08130f; --surface:#0f1c19; --surface2:#0b1714; --line:#1f3a30; --txt:#eef5f1; --dim:#8fa69c;
+    --hot:#19b86b; --flame:#12a98a; --gold:#f4c430; --grass:#19b86b; --sky:#2ea6ff; --violet:#15c2a8; --deep:#0a7d5a;
+    --grad:linear-gradient(90deg,#19b86b,#15c2a8,#2ea6ff);
     --disp:'Anton','Arial Narrow',system-ui,sans-serif;
     --body:'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   }
   html{color-scheme:dark;-webkit-text-size-adjust:100%}
   *{box-sizing:border-box}
-  body{margin:0;background:radial-gradient(900px 480px at 92% -12%,#241a3e,transparent),linear-gradient(172deg,#0a0e1a,#10152b);
+  body{margin:0;background:radial-gradient(900px 480px at 92% -12%,#0c2b22,transparent),linear-gradient(172deg,#07130f,#0a1a16);
     color:var(--txt);font-family:var(--body);font-size:15px;line-height:1.5;overflow-x:hidden;
     -webkit-tap-highlight-color:transparent}
   .tnum{font-variant-numeric:tabular-nums}
@@ -37,7 +37,7 @@
   @media(min-width:760px){.wrap{padding:0 24px}}
 
   /* header (sticky — stays visible after a search) */
-  .site{position:sticky;top:0;z-index:40;background:rgba(10,14,26,.88);backdrop-filter:blur(10px);
+  .site{position:sticky;top:0;z-index:40;background:rgba(8,19,15,.9);backdrop-filter:blur(10px);
     border-bottom:1px solid var(--line);padding:calc(9px + env(safe-area-inset-top)) 0 9px}
   .brand{display:flex;align-items:center;gap:11px;flex-wrap:wrap;max-width:1180px;margin:0 auto;padding:0 16px}
   .logo{flex:0 0 auto;width:36px;height:36px;border-radius:50%;box-shadow:0 3px 12px rgba(0,0,0,.45)}
@@ -54,15 +54,15 @@
   .acwrap{position:relative;flex:1;min-width:0}
   #q{width:100%;background:var(--surface2);border:1.5px solid var(--line);color:var(--txt);
     border-radius:14px;padding:15px 46px 15px 16px;font-size:16px;font-weight:600;font-family:inherit}
-  #q::placeholder{color:#6f7aa0;font-weight:500}
+  #q::placeholder{color:#5f7a6e;font-weight:500}
   #q:focus{border-color:var(--sky)}
   .qclear{position:absolute;top:50%;right:11px;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;
-    border:0;background:#2a3350;color:#cdd6f4;font-size:13px;cursor:pointer;display:none;place-items:center}
+    border:0;background:#1d3a30;color:#cdd6f4;font-size:13px;cursor:pointer;display:none;place-items:center}
   .qclear.show{display:grid}
   .btn{border:0;border-radius:14px;padding:14px 18px;font-weight:800;font-size:15px;cursor:pointer;
     min-height:50px;touch-action:manipulation}
   .btn.go{background:var(--grad);color:#180a04}
-  .btn.alt{background:#222a44;color:#dce3ff;font-weight:700}
+  .btn.alt{background:#16302a;color:#dce3ff;font-weight:700}
   .btn:hover{filter:brightness(1.07)}
   .btn:active{transform:translateY(1px)}
   #aclist{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:60;list-style:none;margin:0;padding:6px;
@@ -72,7 +72,7 @@
   .acitem{display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;cursor:pointer;font-size:15px;font-weight:600}
   .acitem .fl{font-size:18px;width:24px;text-align:center}
   .acitem .gp{margin-left:auto;color:var(--dim);font-size:12px}
-  .acitem.active,.acitem:hover{background:#222a44}
+  .acitem.active,.acitem:hover{background:#16302a}
   #status{font-size:13px;color:var(--dim);min-height:18px;margin:8px 2px 0}
 
   /* panels & layout (mobile-first single column) */
@@ -87,15 +87,14 @@
   /* title race */
   .lbrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;border:0;color:inherit;
     border-radius:10px;padding:8px;cursor:pointer;min-height:44px}
-  .lbrow:hover{background:#1b2340}
+  .lbrow:hover{background:#16302a}
   .lbrow .rk{width:22px;color:var(--dim);font-size:12px;font-weight:800;text-align:right}
   .lbrow .fl{font-size:18px;width:24px;text-align:center}
   .lbrow .nm{width:96px;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   @media(min-width:760px){.lbrow .nm{width:132px}}
-  .bar{flex:1;min-width:36px;height:18px;background:#0d1326;border-radius:9px;overflow:hidden;position:relative}
+  .bar{flex:1;min-width:36px;height:18px;background:#0a1714;border-radius:9px;overflow:hidden;position:relative}
   .bar>i{position:absolute;inset:0 auto 0 0;border-radius:9px;
-    background:linear-gradient(90deg,var(--sky),var(--violet));transition:width .8s cubic-bezier(.2,.8,.2,1)}
-  .lbrow.lead .bar>i{background:var(--grad)}
+    background:var(--grad);transition:width .8s cubic-bezier(.2,.8,.2,1)}
   .lbrow.lead .nm{color:var(--gold)}
   .lbrow .pc{width:52px;text-align:right;font-weight:800;font-size:13px}
 
@@ -106,7 +105,7 @@
   .gcard .gh{font-family:var(--disp);font-size:14px;letter-spacing:.05em;color:var(--dim);margin:2px 4px 7px;text-transform:uppercase}
   .trow{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:transparent;border:0;color:inherit;
     padding:9px 8px;border-radius:9px;cursor:pointer;font-size:14px;min-height:44px}
-  .trow:hover{background:#222a44}
+  .trow:hover{background:#16302a}
   .trow .ps{width:16px;color:var(--dim);font-size:11px;font-weight:800}
   .trow .fl{font-size:17px;width:22px;text-align:center}
   .trow .nm{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -119,7 +118,7 @@
   #detail{scroll-margin-top:78px}
   #detail:empty{display:none}
   .backbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;
-    background:#222a44;color:#dce3ff;border:1px solid var(--line);border-radius:12px;padding:13px 16px;
+    background:#16302a;color:#dce3ff;border:1px solid var(--line);border-radius:12px;padding:13px 16px;
     font-weight:800;font-size:14px;cursor:pointer;min-height:48px;margin-bottom:14px;touch-action:manipulation}
   .backbtn:hover{background:#2b3350}
   @media(min-width:760px){.backbtn{width:auto}}
@@ -132,15 +131,15 @@
   .prow{display:flex;align-items:center;gap:10px;margin-bottom:9px}
   .prow .lab{width:98px;font-size:12.5px;color:#cfd6f0;font-weight:600}
   @media(min-width:760px){.prow .lab{width:122px;font-size:13px}}
-  .prow .pbar{flex:1;min-width:36px;height:22px;background:#0d1326;border-radius:11px;overflow:hidden;position:relative}
+  .prow .pbar{flex:1;min-width:36px;height:22px;background:#0a1714;border-radius:11px;overflow:hidden;position:relative}
   .prow .pbar>i{position:absolute;inset:0 auto 0 0;border-radius:11px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
   .prow .pv{width:54px;text-align:right;font-weight:800;font-size:14px}
   .prow.big .pbar{height:27px}
   .prow.big .lab{color:var(--gold);font-weight:800}
 
   /* what-if — high visibility */
-  .whatif{margin:18px 0 6px;border:1.5px solid var(--flame);border-radius:16px;padding:14px;
-    background:linear-gradient(180deg,rgba(255,122,26,.12),rgba(255,45,107,.05))}
+  .whatif{margin:18px 0 6px;border:1.5px solid var(--grass);border-radius:16px;padding:14px;
+    background:linear-gradient(180deg,rgba(25,184,107,.12),rgba(46,166,255,.06))}
   .whatif .lbl{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:14px;font-weight:800;margin-bottom:11px}
   .whatif .chip{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
     background:var(--flame);color:#180a04;padding:4px 9px;border-radius:999px}
@@ -162,8 +161,8 @@
   .bracket{display:flex;gap:12px;overflow-x:auto;padding:4px 0 12px;scroll-snap-type:x proximity;
     -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
   .bracket::-webkit-scrollbar{height:8px}
-  .bracket::-webkit-scrollbar-thumb{background:#3a466b;border-radius:8px}
-  .bracket::-webkit-scrollbar-track{background:#0d1326;border-radius:8px}
+  .bracket::-webkit-scrollbar-thumb{background:#2a5246;border-radius:8px}
+  .bracket::-webkit-scrollbar-track{background:#0a1714;border-radius:8px}
   .col{flex:0 0 82%;max-width:300px;scroll-snap-align:start}
   @media(min-width:560px){.col{flex:0 0 47%}}
   @media(min-width:760px){.col{flex:1 1 0;min-width:180px;max-width:none}}
@@ -179,10 +178,10 @@
   .team{display:flex;align-items:center;gap:8px;border-radius:9px;padding:7px 9px;font-size:13px;border:1px solid transparent}
   .team .fl{font-size:16px;width:20px;text-align:center}
   .team.ok{background:rgba(33,200,122,.12);border-color:rgba(33,200,122,.42)}
-  .team.tbd{background:#161d31;border-color:#2b3350;color:#c3cbe6}
+  .team.tbd{background:#0e1c18;border-color:#2b3350;color:#c3cbe6}
   .team .badge{margin-left:auto;font-size:9.5px;font-weight:800;padding:3px 7px;border-radius:999px;white-space:nowrap}
   .team.ok .badge{background:var(--grass);color:#06281a}
-  .team.tbd .badge{background:#33405e;color:#cdd6f4}
+  .team.tbd .badge{background:#1d3a30;color:#cdd6f4}
   .col.final .match{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
   .col.final h3{color:var(--gold)}
   .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:4px 0 10px}
@@ -209,14 +208,9 @@
   <div class="brand">
     <svg class="logo" viewBox="0 0 48 48" width="44" height="44" aria-hidden="true" focusable="false">
       <defs><linearGradient id="emb" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#ff2d6b"/><stop offset=".5" stop-color="#ff7a1a"/><stop offset="1" stop-color="#ffc23d"/>
-      </linearGradient></defs>
+        <stop offset="0" stop-color="#19b86b"/><stop offset="1" stop-color="#2ea6ff"/></linearGradient></defs>
       <circle cx="24" cy="24" r="22" fill="url(#emb)"/>
-      <circle cx="24" cy="24" r="13" fill="#fff"/>
-      <g fill="none" stroke="#180a04" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
-        <polygon points="24,17 30,21.5 27.7,28.5 20.3,28.5 18,21.5" fill="#180a04" stroke="none"/>
-        <path d="M24 11v6M15.5 18.5l2.5 3M32.5 18.5l-2.5 3M19.5 34l.8-5.5M28.5 34l-.8-5.5"/>
-      </g>
+      <text x="24" y="24" font-size="27" text-anchor="middle" dominant-baseline="central">⚽</text>
     </svg>
     <span class="wordmark">World&nbsp;Cup&nbsp;2026</span>
     <span class="tag">Knockout Bracket · Win Probability</span>
@@ -283,14 +277,14 @@ const GROUPS={
  E:[['Germany',6],['Ivory Coast',6],['Ecuador',4],['Curacao',1]],
  F:[['Netherlands',7],['Japan',5],['Sweden',4],['Tunisia',0]],
  G:[['Egypt',4],['Iran',2],['Belgium',2],['New Zealand',1]],
- H:[['Spain',4],['Uruguay',2],['Cape Verde',2],['Saudi Arabia',1]],
+ H:[['Spain',7],['Cape Verde',3],['Uruguay',2],['Saudi Arabia',2]],
  I:[['France',9],['Norway',6],['Senegal',0],['Iraq',0]],
  J:[['Argentina',6],['Austria',3],['Algeria',3],['Jordan',0]],
  K:[['Colombia',6],['Portugal',4],['DR Congo',1],['Uzbekistan',0]],
  L:[['England',4],['Ghana',4],['Croatia',3],['Panama',0]],
 };
 /* slots already mathematically locked (from Wikipedia knockout page) */
-const LOCK={Win:{A:1,B:1,C:1,D:1,E:1,F:1,I:1,J:1,K:1},RU:{A:1,B:1,C:1,D:1,E:1,F:1},Th:{B:1,E:1,F:1,I:1}};
+const LOCK={Win:{A:1,B:1,C:1,D:1,E:1,F:1,H:1,I:1,J:1,K:1},RU:{A:1,B:1,C:1,D:1,E:1,F:1,H:1},Th:{B:1,E:1,F:1,I:1}};
 const FLAG={
  'Mexico':'🇲🇽','South Africa':'🇿🇦','South Korea':'🇰🇷','Czechia':'🇨🇿','Switzerland':'🇨🇭','Canada':'🇨🇦',
  'Bosnia and Herzegovina':'🇧🇦','Qatar':'🇶🇦','Brazil':'🇧🇷','Morocco':'🇲🇦','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Haiti':'🇭🇹',
@@ -463,7 +457,7 @@ function renderLeaderboard(){
  const max=Math.max(...rows.map(r=>r.win),0.01);
  $('leaderboard').innerHTML=rows.map((r,i)=>
    `<button class="lbrow ${i===0?'lead':''}" type="button" data-team="${r.t}"><span class="rk tnum">${i+1}</span><span class="fl">${FLAG[r.t]||''}</span>
-     <span class="nm">${i===0?'🏆 ':''}${r.t}</span><span class="bar"><i style="width:${(r.win/max*100).toFixed(1)}%"></i></span>
+     <span class="nm">${r.t}</span><span class="bar"><i style="width:${(r.win/max*100).toFixed(1)}%"></i></span>
      <span class="pc tnum">${pct(r.win)}</span></button>`).join('');
  document.querySelectorAll('.lbrow').forEach(el=>el.onclick=()=>selectTeam(el.dataset.team));
 }
@@ -501,11 +495,11 @@ function selectTeam(team,scn){
       <div><div class="nm">${team}</div>
         <div class="meta">Group ${g} · currently ${posTxt} (${GROUPS[g][pos-1][1]} pts) · rating ${rt(team)} ${decided?'· <span style="color:var(--grass)">slot locked ✓</span>':'· <span style="color:var(--flame)">group not finished</span>'}</div></div></div>
     <div class="prob">
-      ${probBar('Reach R16',p.r16,'linear-gradient(90deg,#36c5ff,#8b5cf6)')}
-      ${probBar('Reach QF',p.qf,'linear-gradient(90deg,#36c5ff,#8b5cf6)')}
-      ${probBar('Reach SF',p.sf,'linear-gradient(90deg,#8b5cf6,#ff2d6b)')}
-      ${probBar('Reach Final',p.fin,'linear-gradient(90deg,#ff2d6b,#ff7a1a)')}
-      ${probBar('Win the Cup 🏆',p.win,'linear-gradient(90deg,#ff7a1a,#ffc23d)',true)}
+      ${probBar('Reach R16',p.r16,'linear-gradient(90deg,#19b86b,#2ea6ff)')}
+      ${probBar('Reach QF',p.qf,'linear-gradient(90deg,#19b86b,#2ea6ff)')}
+      ${probBar('Reach SF',p.sf,'linear-gradient(90deg,#15c2a8,#2ea6ff)')}
+      ${probBar('Reach Final',p.fin,'linear-gradient(90deg,#19b86b,#15c2a8)')}
+      ${probBar('Win the Cup 🏆',p.win,'linear-gradient(90deg,#0a7d5a,#f4c430)',true)}
     </div>
     ${whatif}
     <div class="legend"><span><i class="dot" style="background:var(--grass)"></i> confirmed</span>
