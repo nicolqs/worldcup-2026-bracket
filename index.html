@@ -213,6 +213,18 @@
   .fbpred{display:none;margin-top:5px;padding-top:5px;border-top:1px dashed var(--line);
     color:var(--grass);font-weight:700;font-size:10.5px}
   .fbmatch.open .fbpred{display:block}
+  /* laptop/desktop: fit all 9 columns, no horizontal scroll */
+  @media(min-width:1080px){
+    .fullbracket{overflow-x:visible;gap:7px}
+    .fbcol,.fbcol.r32,.fbcol.r32r{flex:1 1 0;width:auto;min-width:0}
+    .fbmatch{padding:5px 6px}
+    .fbcol>h4{font-size:10px}
+    .fbteam{font-size:11px;gap:4px}
+    .fbteam .fl{font-size:12px;width:14px}
+    .fbteam .pc{font-size:11px}
+    .fbplace{font-size:10px}
+    .fbpred{font-size:10px}
+  }
 
   /* controls + footer */
   .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0 16px}
@@ -581,7 +593,7 @@ function renderFullBracket(){
        `<div class="fbpred">${predScore(t1,t2)}</div></div>`;
    }
    const[a,b]=FEED[m], fin=m===104;
-   const line=c=>{ if(R32[c]){const[x,y]=r32t(c);return `${x} / ${y}`;} return 'Winner of match '+c; };
+   const line=c=>{ if(R32[c]){const[x,y]=r32t(c);return `${x} / ${y}`;} return 'Winner M'+c; };
    return `<div class="fbmatch ${fin?'final':''}"><div class="mlabel">M${m}${fin?' · FINAL':''}</div>`+
      `<div class="fbplace">${line(a)}</div><div class="fbplace">${line(b)}</div></div>`;
  }
