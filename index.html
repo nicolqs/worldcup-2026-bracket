@@ -211,6 +211,9 @@
   .fbteam.fav .nm{font-weight:800;color:var(--txt)}
   .fbteam.fav .pc{color:var(--grass)}
   .fbplace{color:var(--dim);font-style:italic;font-size:11px;padding:3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fbteam.out{opacity:.5}
+  .fbteam.out .nm{text-decoration:line-through}
+  .fbmatch.done .fbteam.fav .pc{color:var(--grass)}
   .fbmatch.final{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
   .fbpred{display:none;margin-top:5px;padding-top:5px;border-top:1px dashed var(--line);
     color:var(--grass);font-weight:700;font-size:10.5px}
@@ -342,6 +345,8 @@ const GROUPS={
 const LOCK={Win:{A:1,B:1,C:1,D:1,E:1,F:1,G:1,H:1,I:1,J:1,K:1,L:1},RU:{A:1,B:1,C:1,D:1,E:1,F:1,G:1,H:1,I:1,J:1,K:1,L:1},Th:{A:1,B:1,D:1,E:1,F:1,G:1,K:1,L:1}};
 // Confirmed R32 third-place slot assignments (group stage complete) -> group letter.
 const THIRD_FIXED={74:'D',77:'F',79:'E',80:'K',81:'B',82:'A',85:'G',87:'L'};
+// Played knockout matches -> team that advanced (forces the result in bracket + simulation).
+const RESULTS={73:'Canada'};
 const FLAG={
  'Mexico':'🇲🇽','South Africa':'🇿🇦','South Korea':'🇰🇷','Czechia':'🇨🇿','Switzerland':'🇨🇭','Canada':'🇨🇦',
  'Bosnia and Herzegovina':'🇧🇦','Qatar':'🇶🇦','Brazil':'🇧🇷','Morocco':'🇲🇦','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Haiti':'🇭🇹',
@@ -353,7 +358,7 @@ const FLAG={
  'DR Congo':'🇨🇩','Uzbekistan':'🇺🇿','England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Ghana':'🇬🇭','Croatia':'🇭🇷','Panama':'🇵🇦'
 };
 const RATING={
- 'Argentina':2088,'France':2084,'Spain':2082,'Brazil':2032,'England':2058,'Portugal':2028,'Netherlands':2002,'Germany':1998,
+ 'Argentina':2090,'France':2148,'Spain':2098,'Brazil':2052,'England':2072,'Portugal':2052,'Netherlands':2030,'Germany':2014,
  'Belgium':1965,'Uruguay':1955,'Croatia':1950,'Morocco':1950,'Colombia':1945,'Japan':1905,'Switzerland':1905,'Senegal':1900,
  'United States':1875,'Mexico':1860,'Norway':1860,'Ecuador':1850,'Austria':1845,'Turkiye':1840,'Sweden':1835,'Ivory Coast':1825,
  'South Korea':1820,'Canada':1820,'Egypt':1815,'Algeria':1810,'Czechia':1810,'Iran':1805,'Scotland':1805,'Bosnia and Herzegovina':1800,
@@ -466,18 +471,20 @@ function allocThirds(groupsOf8){
 function simulateOnce(reached){
  const win={},ru={},pool=[];
  for(const g of GL){
-   const sc=GROUPS[g].map(([t,pts])=>({t,s:rt(t)+pts*40+randn()*120})).sort((a,b)=>b.s-a.s);
-   win[g]=sc[0].t; ru[g]=sc[1].t; pool.push({g,t:sc[2].t,s:sc[2].s});
+   if(LOCK.Win[g]&&LOCK.RU[g]){ win[g]=cur(g,1); ru[g]=cur(g,2); pool.push({g,t:cur(g,3),s:rt(cur(g,3))}); }
+   else { const sc=GROUPS[g].map(([t,pts])=>({t,s:rt(t)+pts*40+randn()*120})).sort((a,b)=>b.s-a.s);
+     win[g]=sc[0].t; ru[g]=sc[1].t; pool.push({g,t:sc[2].t,s:sc[2].s}); }
  }
- pool.sort((a,b)=>b.s-a.s); const top8=pool.slice(0,8);
- const alloc=allocThirds(top8.map(x=>x.g)); const thirdByG={}; top8.forEach(x=>thirdByG[x.g]=x.t);
+ const fixed=THIRD_SLOTS.every(m=>THIRD_FIXED[m]); let alloc={},thirdByG={},quals=[];
+ if(fixed){ THIRD_SLOTS.forEach(m=>{const g=THIRD_FIXED[m];alloc[m]=g;thirdByG[g]=cur(g,3);quals.push(cur(g,3));}); }
+ else { pool.sort((a,b)=>b.s-a.s); const top8=pool.slice(0,8); alloc=allocThirds(top8.map(x=>x.g)); top8.forEach(x=>{thirdByG[x.g]=x.t;quals.push(x.t);}); }
  const mark=(t,r)=>{ if(t&&(!reached[t]||reached[t]<r)) reached[t]=r; };
- for(const g of GL){mark(win[g],1);mark(ru[g],1);} top8.forEach(x=>mark(thirdByG[x.g],1));
+ for(const g of GL){mark(win[g],1);mark(ru[g],1);} quals.forEach(t=>mark(t,1));
  const W={};
  for(const m in R32){ const[s1,s2]=R32[m];
    const t1=s1.type==='3rd'?thirdByG[alloc[m]]:(s1.type==='Win'?win[s1.grp]:ru[s1.grp]);
    const t2=s2.type==='3rd'?thirdByG[alloc[m]]:(s2.type==='Win'?win[s2.grp]:ru[s2.grp]);
-   W[m]=play(t1,t2); mark(W[m],2);
+   W[m]=RESULTS[m]||play(t1,t2); mark(W[m],2);
  }
  const order=[89,90,91,92,93,94,95,96,97,98,99,100,101,102,104], rof=m=>m<=96?3:m<=100?4:m<=102?5:6;
  for(const m of order){ const[a,b]=FEED[m]; W[m]=play(W[a],W[b]); mark(W[m],rof(m)); }
@@ -615,7 +622,13 @@ function renderFullBracket(){
  const r32t=m=>{const[s1,s2]=R32[m];return[res(s1,m),res(s2,m)];};
  const fl=t=>FLAG[t]||'🏳️';
  function box(m){
-   if(R32[m]){ const[t1,t2]=r32t(m), p=pWin(t1,t2);
+   if(R32[m]){ const[t1,t2]=r32t(m), w=RESULTS[m];
+     if(w){ const l=w===t1?t2:t1;
+       return `<div class="fbmatch done" data-m="${m}"><div class="mlabel">M${m} · FT</div>`+
+         `<div class="fbteam fav"><span class="fl">${fl(w)}</span><span class="nm">${w}</span><span class="pc">✓</span></div>`+
+         `<div class="fbteam out"><span class="fl">${fl(l)}</span><span class="nm">${l}</span><span class="pc">out</span></div></div>`;
+     }
+     const p=pWin(t1,t2);
      return `<div class="fbmatch r32" data-m="${m}"><div class="mlabel">M${m}</div>`+
        `<div class="fbteam ${p>=.5?'fav':''}"><span class="fl">${fl(t1)}</span><span class="nm">${t1}</span><span class="pc">${pct(p)}</span></div>`+
        `<div class="fbteam ${p<.5?'fav':''}"><span class="fl">${fl(t2)}</span><span class="nm">${t2}</span><span class="pc">${pct(1-p)}</span></div>`+
