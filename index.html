@@ -331,17 +331,17 @@ const GROUPS={
  D:[['United States',6],['Australia',4],['Paraguay',4],['Turkiye',3]],
  E:[['Germany',6],['Ivory Coast',6],['Ecuador',4],['Curacao',1]],
  F:[['Netherlands',7],['Japan',5],['Sweden',4],['Tunisia',0]],
- G:[['Egypt',4],['Iran',2],['Belgium',2],['New Zealand',1]],
+ G:[['Belgium',5],['Egypt',5],['Iran',3],['New Zealand',1]],
  H:[['Spain',7],['Cape Verde',3],['Uruguay',2],['Saudi Arabia',2]],
- I:[['France',9],['Norway',6],['Senegal',0],['Iraq',0]],
+ I:[['France',9],['Norway',6],['Senegal',3],['Iraq',0]],
  J:[['Argentina',6],['Austria',3],['Algeria',3],['Jordan',0]],
- K:[['Colombia',6],['Portugal',4],['DR Congo',1],['Uzbekistan',0]],
- L:[['England',4],['Ghana',4],['Croatia',3],['Panama',0]],
+ K:[['Colombia',7],['Portugal',5],['Uzbekistan',3],['DR Congo',1]],
+ L:[['England',7],['Croatia',6],['Ghana',4],['Panama',0]],
 };
 /* slots already mathematically locked (from Wikipedia knockout page) */
-const LOCK={Win:{A:1,B:1,C:1,D:1,E:1,F:1,H:1,I:1,J:1,K:1},RU:{A:1,B:1,C:1,D:1,E:1,F:1,H:1},Th:{B:1,E:1,F:1,I:1}};
-// Confirmed R32 third-place slot assignments (from the official Wikipedia bracket) -> group letter.
-const THIRD_FIXED={74:'D',77:'F',81:'B'};
+const LOCK={Win:{A:1,B:1,C:1,D:1,E:1,F:1,G:1,H:1,I:1,J:1,K:1,L:1},RU:{A:1,B:1,C:1,D:1,E:1,F:1,G:1,H:1,I:1,J:1,K:1,L:1},Th:{A:1,B:1,D:1,E:1,F:1,G:1,K:1,L:1}};
+// Confirmed R32 third-place slot assignments (group stage complete) -> group letter.
+const THIRD_FIXED={74:'D',77:'F',79:'E',80:'K',81:'B',82:'A',85:'G',87:'L'};
 const FLAG={
  'Mexico':'🇲🇽','South Africa':'🇿🇦','South Korea':'🇰🇷','Czechia':'🇨🇿','Switzerland':'🇨🇭','Canada':'🇨🇦',
  'Bosnia and Herzegovina':'🇧🇦','Qatar':'🇶🇦','Brazil':'🇧🇷','Morocco':'🇲🇦','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Haiti':'🇭🇹',
