@@ -188,6 +188,24 @@
   .legend span{display:inline-flex;align-items:center;gap:6px}
   .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
 
+  /* match centre */
+  .feat{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:760px){.feat{grid-template-columns:1fr 1fr}}
+  .fcard{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .fhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .fmno{font-size:10px;color:var(--dim);font-weight:800;letter-spacing:.04em}
+  .fstatus{font-size:10px;color:var(--dim);font-weight:700}
+  .fstatus.done{color:var(--grass)}
+  .fteams{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:15px;font-weight:700}
+  .fteams .fvs{color:var(--dim);font-size:12px;font-weight:700}
+  .fscore{font-family:var(--disp);font-size:20px;letter-spacing:.5px}
+  .wdl{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:12px 0 6px;background:#0a1714}
+  .wdl i{display:block;height:100%}
+  .wdl .w{background:var(--grass)} .wdl .d{background:#4a5a52} .wdl .l{background:var(--sky)}
+  .wdlk{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);font-weight:700}
+  .fmeta{margin-top:10px;font-size:12px;color:var(--grass);font-weight:700}
+  .fadv{margin-top:8px;font-size:13px;color:var(--grass);font-weight:800}
+
   /* full bracket */
   .fullbracket{position:relative;display:flex;align-items:stretch;gap:10px;overflow-x:auto;padding:4px 0 12px;
     scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
@@ -289,6 +307,11 @@
 
   <section id="detail" class="panel" aria-label="Selected team"></section>
 
+  <section class="panel" aria-label="Match centre">
+    <h2>⚽ Match Centre <span class="sub">Marquee Round-of-32 ties — final result, or model Win / Draw / Loss forecast</span></h2>
+    <div id="featured" class="feat"></div>
+  </section>
+
   <section class="panel" aria-label="Full bracket">
     <h2>🗺️ Full Bracket <span class="sub">As it stands — win % for each decided Round-of-32 match</span></h2>
     <p class="hint">Slots aren't final, so they update after every match. Third-place qualifiers are projected by points (tiebreaks not modelled). Tap a Round-of-32 match for the predicted score.</p>
@@ -347,6 +370,10 @@ const LOCK={Win:{A:1,B:1,C:1,D:1,E:1,F:1,G:1,H:1,I:1,J:1,K:1,L:1},RU:{A:1,B:1,C:
 const THIRD_FIXED={74:'D',77:'F',79:'E',80:'K',81:'B',82:'A',85:'G',87:'L'};
 // Played knockout matches -> team that advanced (forces the result in bracket + simulation).
 const RESULTS={73:'Canada'};
+// Final scores for played matches, oriented as [slot1]–[slot2] (slot order in R32).
+const SCORES={73:'0–1'};
+// Marquee matches to feature in the Match Centre (match numbers).
+const FEATURED=[77,76,73];
 const FLAG={
  'Mexico':'🇲🇽','South Africa':'🇿🇦','South Korea':'🇰🇷','Czechia':'🇨🇿','Switzerland':'🇨🇭','Canada':'🇨🇦',
  'Bosnia and Herzegovina':'🇧🇦','Qatar':'🇶🇦','Brazil':'🇧🇷','Morocco':'🇲🇦','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Haiti':'🇭🇹',
@@ -663,7 +690,28 @@ function drawConnectors(){
  svg.innerHTML=`<path d="${d}" fill="none" stroke="rgba(143,166,156,.4)" stroke-width="1.5"/>`;
 }
 
-function boot(force){ ensureSim(force); renderFullBracket(); renderLeaderboard(); renderGroups(); if(SELECTED) selectTeam(SELECTED); }
+/* ---- match centre (featured ties: result or win/draw/loss forecast) ---- */
+function drawProb(a,b){ return Math.max(0.12, 0.30 - Math.min(Math.abs(rt(a)-rt(b)),400)/400*0.16); }
+function renderFeatured(){
+ const ts=projThirds(), fl=t=>FLAG[t]||'🏳️';
+ const res=(s,m)=> s.type==='Win'?cur(s.grp,1): s.type==='RU'?cur(s.grp,2): ts[m];
+ $('featured').innerHTML=FEATURED.map(m=>{
+   const[s1,s2]=R32[m], a=res(s1,m), b=res(s2,m), [d,v]=MI[m], city=v.split(', ')[1];
+   if(RESULTS[m]){ const w=RESULTS[m];
+     return `<div class="fcard"><div class="fhd"><span class="fmno">M${m} · ${d}</span><span class="fstatus done">FULL TIME</span></div>`+
+       `<div class="fteams"><span>${fl(a)} ${a}</span><span class="fscore">${SCORES[m]||''}</span><span>${b} ${fl(b)}</span></div>`+
+       `<div class="fadv">✅ ${w} advanced to the Round of 16</div></div>`;
+   }
+   const dr=drawProb(a,b), wa=(1-dr)*pWin(a,b), wb=(1-dr)*pWin(b,a), adv=pWin(a,b);
+   return `<div class="fcard"><div class="fhd"><span class="fmno">M${m} · ${d}</span><span class="fstatus">${city} · upcoming</span></div>`+
+     `<div class="fteams"><span>${fl(a)} <b>${a}</b></span><span class="fvs">vs</span><span><b>${b}</b> ${fl(b)}</span></div>`+
+     `<div class="wdl"><i class="w" style="width:${(wa*100).toFixed(0)}%"></i><i class="d" style="width:${(dr*100).toFixed(0)}%"></i><i class="l" style="width:${(wb*100).toFixed(0)}%"></i></div>`+
+     `<div class="wdlk"><span>${a} ${(wa*100).toFixed(0)}%</span><span>Draw ${(dr*100).toFixed(0)}%</span><span>${b} ${(wb*100).toFixed(0)}%</span></div>`+
+     `<div class="fmeta">${predScore(a,b)} · ${a} ${(adv*100).toFixed(0)}% to advance</div></div>`;
+ }).join('');
+}
+
+function boot(force){ ensureSim(force); renderFeatured(); renderFullBracket(); renderLeaderboard(); renderGroups(); if(SELECTED) selectTeam(SELECTED); }
 $('go').onclick=()=>{ acClose(); const t=findTeam($('q').value); if(t)selectTeam(t); else $('status').textContent='No matching country — try a full name like “Brazil” or “United States”.'; };
 
 /* ---- autocomplete ---- */
