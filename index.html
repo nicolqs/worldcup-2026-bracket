@@ -310,12 +310,7 @@
   <section class="panel" aria-label="Full bracket">
     <h2>🗺️ Full Bracket <span class="sub">As it stands — win % for each decided Round-of-32 match</span></h2>
     <p class="hint">Slots aren't final, so they update after every match. Third-place qualifiers are projected by points (tiebreaks not modelled). Tap a Round-of-32 match for the predicted score.</p>
-    <details id="fbDetails" class="fbacc">
-      <summary class="fbsummary">🗺️ Tap to open the full bracket</summary>
-      <div class="fbbody">
-        <div class="bracketwrap"><div class="scrollhint">← swipe across the bracket →</div><div id="fullbracket" class="fullbracket"></div></div>
-      </div>
-    </details>
+    <div class="bracketwrap"><div class="scrollhint">← swipe across the bracket →</div><div id="fullbracket" class="fullbracket"></div></div>
   </section>
 
   <section class="panel" aria-label="Match centre">
@@ -434,50 +429,42 @@ function findTeam(raw){ if(!raw)return null; const s=raw.trim().toLowerCase();
 function leaves(m){ if(R32[m])return R32[m].slice(); const[a,b]=FEED[m]; return leaves(a).concat(leaves(b)); }
 function parentOf(m){ for(const p in FEED) if(FEED[p].includes(m)) return +p; return null; }
 function r32MatchOf(key){ for(const m in R32){ const i=R32[m].findIndex(s=>s.key===key); if(i>-1) return {m:+m,i}; } return null; }
-function chipsForSlot(slot){
- if(slot.type==='3rd'){
-   const out=[];
-   slot.set.forEach(g=>{ const t=cur(g,3); out.push({name:t,flag:FLAG[t]||'⚽',badge:LOCK.Th[g]?('3rd '+g+' ✓'):('3rd '+g),ok:!!LOCK.Th[g]}); });
-   return out;
- }
- const g=slot.grp, t=cur(g,slot.type==='Win'?1:2);
- const locked=slot.type==='Win'?LOCK.Win[g]:LOCK.RU[g];
- const lbl=(slot.type==='Win'?'Win ':'RU ')+g+(locked?' ✓':'');
- return [{name:t,flag:FLAG[t]||'⚽',badge:lbl,ok:!!locked}];
+// Concrete team(s) that can still emerge from R32 match m (played match collapses to its winner).
+function r32Teams(m){
+ if(RESULTS[m]) return [RESULTS[m]];
+ const part=s=> s.type==='Win'?cur(s.grp,1): s.type==='RU'?cur(s.grp,2): cur(THIRD_FIXED[m],3);
+ return R32[m].map(part);
 }
-function chipsForMatch(m){ const seen={},out=[]; leaves(m).forEach(s=>chipsForSlot(s).forEach(c=>{if(!seen[c.name]){seen[c.name]=1;out.push(c);}})); out.sort((a,b)=>b.ok-a.ok); return out; }
+function leafTeams(m){ if(R32[m]) return r32Teams(m); const[a,b]=FEED[m]; return leafTeams(a).concat(leafTeams(b)); }
 function slotForTeam(team,scn){
  const {g,pos}=POS[team];
  const type = scn==='win'?'Win': scn==='ru'?'RU': scn==='third'?'3rd': (pos===1?'Win':pos===2?'RU':pos===3?'3rd':null);
  if(!type) return null;
- if(type==='3rd'){ const m=THIRD_SLOTS.find(mm=>R32[mm].some(s=>s.type==='3rd'&&s.set.includes(g))); return {type,g,key:'3rd '+g,m,ambiguous:true}; }
- const key=type+' '+g; const loc=r32MatchOf(key); return {type,g,key,m:loc.m,i:loc.i};
+ if(type==='3rd'){ const fm=Object.keys(THIRD_FIXED).find(mm=>THIRD_FIXED[mm]===g);
+   const m=fm?+fm:THIRD_SLOTS.find(mm=>R32[mm].some(s=>s.type==='3rd'&&s.set.includes(g))); return m?{type,g,m}:null; }
+ const loc=r32MatchOf(type+' '+g); return loc?{type,g,m:loc.m,i:loc.i}:null;
 }
 function computePath(team,scn){
  const sl=slotForTeam(team,scn); if(!sl) return null;
- const steps=[];
- if(sl.type==='3rd'){
-   const other=R32[sl.m].find(s=>s.key!==null && (s.type==='Win'||s.type==='RU'));
-   steps.push({match:sl.m, opps:chipsForSlot(other), oppLabel:'(3rd-place slot — exact match depends on the best-third draw)'});
- } else {
-   const other=R32[sl.m][1-sl.i];
-   let opps, lab='';
-   if(other.type==='3rd' && THIRD_FIXED[sl.m]){ const g=THIRD_FIXED[sl.m], t=cur(g,3); opps=[{name:t,flag:FLAG[t]||'⚽',badge:'3rd '+g+' ✓',ok:true}]; }
-   else if(other.type==='3rd'){ opps=chipsForSlot(other); lab='3rd place from Groups '+other.set.join('/'); }
-   else { opps=chipsForSlot(other); }
-   steps.push({match:sl.m, opps, oppLabel:lab});
- }
- let curm=sl.m,p=parentOf(curm);
- while(p){ const sib=FEED[p].find(x=>x!==curm); steps.push({match:p, opps:chipsForMatch(sib), oppLabel:'winner of Match '+sib}); curm=p; p=parentOf(curm); }
+ const m0=sl.m, through=new Set(Object.values(RESULTS));
+ const chip=t=>({name:t,flag:FLAG[t]||'⚽',ok:through.has(t)});
+ const part=s=> s.type==='Win'?cur(s.grp,1): s.type==='RU'?cur(s.grp,2): cur(THIRD_FIXED[m0],3);
+ const parts=R32[m0].map(part), opp0=parts[0]===team?parts[1]:parts[0];
+ if(RESULTS[m0] && RESULTS[m0]!==team) return {team,flag:FLAG[team]||'🏳️',eliminated:true,by:RESULTS[m0]};
+ const won0=RESULTS[m0]===team;
+ const steps=[{match:m0, opps:[{name:opp0,flag:FLAG[opp0]||'⚽',beaten:won0}], oppLabel:won0?'beat':'plays', done:won0}];
+ let curm=m0,p=parentOf(curm);
+ while(p){ const sib=FEED[p].find(x=>x!==curm);
+   steps.push({match:p, opps:Array.from(new Set(leafTeams(sib))).map(chip), oppLabel:'possible opponents'}); curm=p; p=parentOf(curm); }
  return {team,flag:FLAG[team]||'🏳️',slot:sl,steps};
 }
 function renderPath(path){
  return '<div class="bracketwrap"><div class="scrollhint">← swipe across the rounds →</div><div class="bracket">'+path.steps.map(st=>{
    const[d,v]=MI[st.match]; const fin=ROUND(st.match)==='Final';
-   const opps=st.opps.map(c=>`<div class="team ${c.ok?'ok':'tbd'}"><span class="fl">${c.flag}</span> ${c.name} <span class="badge">${c.badge}</span></div>`).join('');
+   const opps=st.opps.map(c=>`<div class="team ${c.beaten?'tbd out':(c.ok?'ok':'tbd')}"><span class="fl">${c.flag}</span> ${c.name}${c.ok?' <span class="badge">in R16</span>':''}${c.beaten?' <span class="badge">out</span>':''}</div>`).join('');
    return `<div class="col ${fin?'final':''}"><h3>${fin?'★ ':''}${ROUND(st.match)}</h3><div class="when">${d} · ${v.split(', ')[1]}</div>
      <div class="match"><div class="mhead"><span class="mno">MATCH ${st.match}</span><span class="venue">${v.replace(', ','<br>')}</span></div>
-       <div class="me"><span>${path.flag}</span> ${path.team}</div><div class="vs">— ${st.oppLabel||'opponent'} —</div>
+       <div class="me"><span>${path.flag}</span> ${path.team}</div><div class="vs">— ${st.oppLabel} —</div>
        <div class="opps">${opps}</div></div></div>`;
  }).join('')+'</div></div>';
 }
@@ -582,8 +569,9 @@ function selectTeam(team,scn){
    : `<div class="whatif"><div class="lbl"><span class="chip">What-if</span> If ${team} finishes Group ${g} as…</div>
        <div class="wbtns">${wbtn('win','🥇','Win Group')}${wbtn('ru','🥈','Runner-up')}${wbtn('third','🥉','Third')}</div></div>`;
  const path=computePath(team,scn|| (pos<=3?undefined:'win'));
- const pathHtml = path ? renderPath(path)
-   : `<p class="hint">Currently 4th in Group ${g} — pick a what-if finish above to project a knockout path.</p>`;
+ const pathHtml = !path ? `<p class="hint">Currently 4th in Group ${g} — pick a what-if finish above to project a knockout path.</p>`
+   : path.eliminated ? `<p class="hint">🛑 ${team} were knocked out by ${path.by} in the Round of 32.</p>`
+   : renderPath(path);
  $('detail').innerHTML=
    `<button class="backbtn" id="backBtn" type="button">‹ Back to All Teams</button>
     <div class="dhead"><span class="fl">${FLAG[team]||'🏳️'}</span>
@@ -711,7 +699,12 @@ function renderFeatured(){
  }).join('');
 }
 
-function boot(force){ ensureSim(force); renderFeatured(); renderFullBracket(); renderLeaderboard(); renderGroups(); if(SELECTED) selectTeam(SELECTED); }
+function boot(force){
+ ensureSim(force);
+ const safe=(fn)=>{ try{ fn(); }catch(e){ console.error(e); } };
+ safe(renderFullBracket); safe(renderFeatured); safe(renderLeaderboard); safe(renderGroups);
+ if(SELECTED) safe(()=>selectTeam(SELECTED));
+}
 $('go').onclick=()=>{ acClose(); const t=findTeam($('q').value); if(t)selectTeam(t); else $('status').textContent='No matching country — try a full name like “Brazil” or “United States”.'; };
 
 /* ---- autocomplete ---- */
