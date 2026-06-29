@@ -437,8 +437,7 @@ function slotForTeam(team,scn){
  const {g,pos}=POS[team];
  const type = scn==='win'?'Win': scn==='ru'?'RU': scn==='third'?'3rd': (pos===1?'Win':pos===2?'RU':pos===3?'3rd':null);
  if(!type) return null;
- if(type==='3rd'){ const fm=Object.keys(THIRD_FIXED).find(mm=>THIRD_FIXED[mm]===g);
-   const m=fm?+fm:THIRD_SLOTS.find(mm=>R32[mm].some(s=>s.type==='3rd'&&s.set.includes(g))); return m?{type,g,m}:null; }
+ if(type==='3rd'){ const fm=Object.keys(THIRD_FIXED).find(mm=>THIRD_FIXED[mm]===g); return fm?{type,g,m:+fm}:null; }
  const loc=r32MatchOf(type+' '+g); return loc?{type,g,m:loc.m,i:loc.i}:null;
 }
 function computePath(team,scn){
@@ -557,38 +556,36 @@ function clearSelection(){ SELECTED=null; $('detail').innerHTML=''; $('q').value
 function selectTeam(team,scn){
  if(!team)return; SELECTED=team;
  const {g,pos}=POS[team]; const p=SIM[team]||{q:0,r16:0,qf:0,sf:0,fin:0,win:0};
- const decided = (pos<=2 ? (pos===1?LOCK.Win[g]:LOCK.RU[g]) : (pos===3?LOCK.Th[g]:false));
  const posTxt=['1st','2nd','3rd','4th'][pos-1];
- const scnNow = scn || (pos===1?'win':pos===2?'ru':pos===3?'third':'win');
- const wbtn=(id,ic,lab)=>`<button class="wbtn ${scnNow===id?'on':''}" data-scn="${id}" type="button"><span class="ic">${ic}</span>${lab}</button>`;
- const whatif = decided
-   ? `<p class="lock">✓ Group ${g} is settled — ${team} is locked as ${posTxt}.</p>`
-   : `<div class="whatif"><div class="lbl"><span class="chip">What-if</span> If ${team} finishes Group ${g} as…</div>
-       <div class="wbtns">${wbtn('win','🥇','Win Group')}${wbtn('ru','🥈','Runner-up')}${wbtn('third','🥉','Third')}</div></div>`;
- const path=computePath(team,scn|| (pos<=3?undefined:'win'));
- const pathHtml = !path ? `<p class="hint">Currently 4th in Group ${g} — pick a what-if finish above to project a knockout path.</p>`
-   : path.eliminated ? `<p class="hint">🛑 ${team} were knocked out by ${path.by} in the Round of 32.</p>`
-   : renderPath(path);
- $('detail').innerHTML=
-   `<button class="backbtn" id="backBtn" type="button">‹ Back to All Teams</button>
-    <div class="dhead"><span class="fl">${FLAG[team]||'🏳️'}</span>
+ const qualified = pos===1 || pos===2 || (pos===3 && Object.values(THIRD_FIXED).includes(g));
+ const back=`<button class="backbtn" id="backBtn" type="button">‹ Back to All Teams</button>`;
+ const head=`<div class="dhead"><span class="fl">${FLAG[team]||'🏳️'}</span>
       <div><div class="nm">${team}</div>
-        <div class="meta">Group ${g} · currently ${posTxt} (${GROUPS[g][pos-1][1]} pts) · rating ${rt(team)} ${decided?'· <span style="color:var(--grass)">slot locked ✓</span>':'· <span style="color:var(--flame)">group not finished</span>'}</div></div></div>
-    <div class="prob">
+        <div class="meta">Group ${g} · finished ${posTxt} (${GROUPS[g][pos-1][1]} pts) · rating ${rt(team)}</div></div></div>`;
+ if(!qualified){
+   $('detail').innerHTML=back+head+
+     `<p class="lock" style="color:var(--dim)">🛑 ${team} were eliminated in the group stage (finished ${posTxt} in Group ${g}).</p>`;
+   const b0=$('backBtn'); if(b0) b0.onclick=clearSelection;
+   $('detail').scrollIntoView({behavior:REDUCED()?'auto':'smooth',block:'start'}); return;
+ }
+ const path=computePath(team);
+ const pathHtml = path && path.eliminated
+   ? `<p class="lock" style="color:var(--dim)">🛑 ${team} were knocked out by ${path.by} in the Round of 32.</p>`
+   : renderPath(path);
+ $('detail').innerHTML=back+head+
+   `<div class="prob">
       ${probBar('Reach R16',p.r16,'linear-gradient(90deg,#19b86b,#2ea6ff)')}
       ${probBar('Reach QF',p.qf,'linear-gradient(90deg,#19b86b,#2ea6ff)')}
       ${probBar('Reach SF',p.sf,'linear-gradient(90deg,#15c2a8,#2ea6ff)')}
       ${probBar('Reach Final',p.fin,'linear-gradient(90deg,#19b86b,#15c2a8)')}
       ${probBar('Win the Cup 🏆',p.win,'linear-gradient(90deg,#0a7d5a,#f4c430)',true)}
     </div>
-    ${whatif}
-    <div class="legend"><span><i class="dot" style="background:var(--grass)"></i> confirmed</span>
-      <span><i class="dot" style="background:var(--line)"></i> projected / not locked</span>
+    <div class="legend"><span><i class="dot" style="background:var(--grass)"></i> through to R16</span>
+      <span><i class="dot" style="background:var(--line)"></i> still to play</span>
       <span><i class="dot" style="background:var(--gold)"></i> final</span></div>
-    <h2 style="margin-top:8px">🧭 Possible Road for ${team} <span class="sub">opponents who can reach each slot</span></h2>
+    <h2 style="margin-top:8px">🧭 Possible Road for ${team} <span class="sub">opponents who can reach each round</span></h2>
     ${pathHtml}`;
  const bb=$('backBtn'); if(bb) bb.onclick=clearSelection;
- document.querySelectorAll('#detail .wbtn').forEach(b=>b.onclick=()=>selectTeam(team,b.dataset.scn));
  $('detail').scrollIntoView({behavior:REDUCED()?'auto':'smooth',block:'start'});
 }
 
