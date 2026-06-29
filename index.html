@@ -229,6 +229,8 @@
   .fbteam.fav .nm{font-weight:800;color:var(--txt)}
   .fbteam.fav .pc{color:var(--grass)}
   .fbplace{color:var(--dim);font-style:italic;font-size:11px;padding:3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fbwin{display:inline-flex;align-items:center;gap:5px;color:var(--grass);font-style:normal;font-weight:800}
+  .fbwin .fl{font-size:13px}
   .fbteam.out{opacity:.5}
   .fbteam.out .nm{text-decoration:line-through}
   .fbmatch.done .fbteam.fav .pc{color:var(--grass)}
@@ -645,7 +647,7 @@ function renderFullBracket(){
        `<div class="fbpred">${predScore(t1,t2)}</div></div>`;
    }
    const[a,b]=FEED[m], fin=m===104;
-   const line=c=>{ if(R32[c]){ if(RESULTS[c]) return RESULTS[c]+' ✓'; const[x,y]=r32t(c); return `${x} / ${y}`; } return 'Winner M'+c; };
+   const line=c=>{ if(R32[c]){ if(RESULTS[c]){const w=RESULTS[c];return `<span class="fbwin"><span class="fl">${fl(w)}</span> ${w}</span>`;} const[x,y]=r32t(c); return `${x} / ${y}`; } return 'Winner M'+c; };
    return `<div class="fbmatch ${fin?'final':''}" data-m="${m}"><div class="mlabel">M${m}${fin?' · FINAL':''}</div>`+
      `<div class="fbplace">${line(a)}</div><div class="fbplace">${line(b)}</div></div>`;
  }
