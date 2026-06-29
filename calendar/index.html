@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="description" content="Calendar of every 2026 FIFA World Cup knockout match — Round of 32 through the Final, with dates, venues and results." />
+<meta name="theme-color" content="#08130f" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2319b86b'/><stop offset='1' stop-color='%232ea6ff'/></linearGradient></defs><circle cx='24' cy='24' r='22' fill='url(%23g)'/><text x='24' y='34' font-size='28' text-anchor='middle'>📅</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800;900&display=swap" />
+<title>Knockout Calendar — World Cup 2026 · by Nico Vincent</title>
+<style>
+  :root{
+    --ink:#08130f; --surface:#0f1c19; --surface2:#0b1714; --line:#1f3a30; --txt:#eef5f1; --dim:#8fa69c;
+    --grass:#19b86b; --teal:#15c2a8; --sky:#2ea6ff; --violet:#a78bfa; --gold:#f4c430;
+    --grad:linear-gradient(90deg,#19b86b,#15c2a8,#2ea6ff);
+    --disp:'Anton','Arial Narrow',system-ui,sans-serif;
+    --body:'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  html{color-scheme:dark;-webkit-text-size-adjust:100%}
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(900px 480px at 92% -12%,#0c2b22,transparent),linear-gradient(172deg,#07130f,#0a1a16);
+    color:var(--txt);font-family:var(--body);font-size:15px;line-height:1.5;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+  a{color:var(--sky)}
+  :focus-visible{outline:2.5px solid var(--sky);outline-offset:2px;border-radius:8px}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 16px}
+  @media(min-width:760px){.wrap{padding:0 24px}}
+  .site{position:sticky;top:0;z-index:40;background:rgba(8,19,15,.9);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);padding:calc(9px + env(safe-area-inset-top)) 0 9px}
+  .brand{display:flex;align-items:center;gap:11px;flex-wrap:wrap;max-width:1240px;margin:0 auto;padding:0 16px}
+  @media(min-width:760px){.brand{padding:0 24px}}
+  .logo{flex:0 0 auto;width:38px;height:38px;border-radius:50%;box-shadow:0 3px 12px rgba(0,0,0,.45)}
+  .wordmark{font-family:var(--disp);font-size:24px;line-height:1;letter-spacing:.5px;text-transform:uppercase;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  @media(min-width:760px){.wordmark{font-size:32px}}
+  .brand .tag{color:var(--dim);font-size:12px;font-weight:600}
+  .navlink{margin-left:auto;color:var(--sky);font-weight:800;font-size:13px;text-decoration:none;
+    background:#16302a;border:1px solid var(--line);border-radius:999px;padding:8px 14px;min-height:40px;display:inline-flex;align-items:center}
+  main{padding-top:18px}
+  h1{margin:0;font-size:22px}
+  .sub{color:var(--dim);font-size:13px;margin:4px 0 14px}
+  /* legend */
+  .legend{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+  .lg{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--dim);
+    background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+  .lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+  /* weekday header (desktop only) */
+  .dow{display:none}
+  @media(min-width:760px){
+    .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:8px}
+    .dow span{text-align:center;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--dim);text-transform:uppercase}
+  }
+  /* calendar — mobile: agenda (hide empty); desktop: month grid */
+  .cal{display:grid;grid-template-columns:1fr;gap:10px;padding-bottom:50px}
+  @media(min-width:760px){.cal{grid-template-columns:repeat(7,1fr);gap:8px}}
+  .day{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 11px;min-height:64px}
+  .day.empty{display:none}
+  @media(min-width:760px){.day{min-height:124px;border-radius:12px;padding:8px} .day.empty{display:block;background:transparent;border-color:transparent}}
+  .day.today{border-color:var(--sky);box-shadow:0 0 0 1px var(--sky) inset}
+  .dnum{font-family:var(--disp);font-size:15px;color:var(--dim);margin-bottom:8px;letter-spacing:.03em}
+  .day.today .dnum{color:var(--sky)}
+  .events{display:flex;flex-direction:column;gap:7px}
+  .ev{background:var(--surface2);border:1px solid var(--line);border-left:3px solid var(--sky);border-radius:9px;padding:7px 9px}
+  .ev .rd{font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+  .ev .mt{display:block;font-size:12.5px;font-weight:600;margin-top:2px}
+  .ev .mt .v{color:var(--dim);font-weight:700;font-size:11px;margin:0 2px}
+  .ev .mt .win{color:var(--grass)}
+  .ev .mt .sc{font-family:var(--disp);font-size:13px;margin:0 4px}
+  .ev .vn{display:block;font-size:10.5px;color:var(--dim);margin-top:3px}
+  footer{color:var(--dim);font-size:12px;line-height:1.6;padding:6px 0 calc(40px + env(safe-area-inset-bottom))}
+  footer a{color:var(--sky)}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+</style>
+</head>
+<body>
+<header class="site">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 48 48" width="38" height="38" aria-hidden="true">
+      <defs><linearGradient id="emb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#19b86b"/><stop offset="1" stop-color="#2ea6ff"/></linearGradient></defs>
+      <circle cx="24" cy="24" r="22" fill="url(#emb)"/><text x="24" y="24" font-size="24" text-anchor="middle" dominant-baseline="central">📅</text>
+    </svg>
+    <span class="wordmark">World&nbsp;Cup&nbsp;2026</span>
+    <span class="tag">Knockout Calendar</span>
+    <a class="navlink" href="/">← Bracket &amp; Odds</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>🗓️ Knockout Stage Calendar</h1>
+  <p class="sub">Every match from the Round of 32 to the Final · 28 Jun – 19 Jul 2026 · USA · Canada · Mexico. Times not shown — tap the Bracket for odds &amp; paths.</p>
+  <div class="legend" id="legend"></div>
+  <div class="dow"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+  <div id="cal" class="cal"></div>
+  <footer>
+    Dates &amp; venues from the official schedule. Results update as games are played.
+    <br>Made with <span style="color:var(--grass)">♥</span> by Nico Vincent · <a href="/">back to the bracket</a>
+  </footer>
+</main>
+
+<script>
+/* ===== shared data (keep RESULTS/SCORES in sync with the bracket page) ===== */
+const GROUPS={
+ A:[['Mexico',9],['South Africa',4],['South Korea',3],['Czechia',1]],
+ B:[['Switzerland',7],['Canada',4],['Bosnia and Herzegovina',4],['Qatar',1]],
+ C:[['Brazil',7],['Morocco',7],['Scotland',3],['Haiti',0]],
+ D:[['United States',6],['Australia',4],['Paraguay',4],['Turkiye',3]],
+ E:[['Germany',6],['Ivory Coast',6],['Ecuador',4],['Curacao',1]],
+ F:[['Netherlands',7],['Japan',5],['Sweden',4],['Tunisia',0]],
+ G:[['Belgium',5],['Egypt',5],['Iran',3],['New Zealand',1]],
+ H:[['Spain',7],['Cape Verde',3],['Uruguay',2],['Saudi Arabia',2]],
+ I:[['France',9],['Norway',6],['Senegal',3],['Iraq',0]],
+ J:[['Argentina',6],['Austria',3],['Algeria',3],['Jordan',0]],
+ K:[['Colombia',7],['Portugal',5],['Uzbekistan',3],['DR Congo',1]],
+ L:[['England',7],['Croatia',6],['Ghana',4],['Panama',0]],
+};
+const FLAG={'Mexico':'🇲🇽','South Africa':'🇿🇦','South Korea':'🇰🇷','Czechia':'🇨🇿','Switzerland':'🇨🇭','Canada':'🇨🇦','Bosnia and Herzegovina':'🇧🇦','Qatar':'🇶🇦','Brazil':'🇧🇷','Morocco':'🇲🇦','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Haiti':'🇭🇹','United States':'🇺🇸','Australia':'🇦🇺','Paraguay':'🇵🇾','Turkiye':'🇹🇷','Germany':'🇩🇪','Ivory Coast':'🇨🇮','Ecuador':'🇪🇨','Curacao':'🇨🇼','Netherlands':'🇳🇱','Japan':'🇯🇵','Sweden':'🇸🇪','Tunisia':'🇹🇳','Belgium':'🇧🇪','Egypt':'🇪🇬','Iran':'🇮🇷','New Zealand':'🇳🇿','Spain':'🇪🇸','Cape Verde':'🇨🇻','Uruguay':'🇺🇾','Saudi Arabia':'🇸🇦','France':'🇫🇷','Norway':'🇳🇴','Senegal':'🇸🇳','Iraq':'🇮🇶','Argentina':'🇦🇷','Austria':'🇦🇹','Algeria':'🇩🇿','Jordan':'🇯🇴','Colombia':'🇨🇴','Portugal':'🇵🇹','Uzbekistan':'🇺🇿','DR Congo':'🇨🇩','England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Ghana':'🇬🇭','Croatia':'🇭🇷','Panama':'🇵🇦'};
+const THIRD_FIXED={74:'D',77:'F',79:'E',80:'K',81:'B',82:'A',85:'G',87:'L'};
+const RESULTS={73:'Canada'};
+const SCORES={73:'0–1'};
+const S=(t,g)=>({type:t,grp:g});
+const S3=()=>({type:'3rd'});
+const R32={
+ 73:[S('RU','A'),S('RU','B')],74:[S('Win','E'),S3()],75:[S('Win','F'),S('RU','C')],76:[S('Win','C'),S('RU','F')],
+ 77:[S('Win','I'),S3()],78:[S('RU','E'),S('RU','I')],79:[S('Win','A'),S3()],80:[S('Win','L'),S3()],
+ 81:[S('Win','D'),S3()],82:[S('Win','G'),S3()],83:[S('RU','K'),S('RU','L')],84:[S('Win','H'),S('RU','J')],
+ 85:[S('Win','B'),S3()],86:[S('Win','J'),S('RU','H')],87:[S('Win','K'),S3()],88:[S('RU','D'),S('RU','G')]
+};
+const FEED={89:[74,77],90:[73,75],91:[76,78],92:[79,80],93:[83,84],94:[81,82],95:[86,88],96:[85,87],
+ 97:[89,90],98:[93,94],99:[91,92],100:[95,96],101:[97,98],102:[99,100],103:[101,102],104:[101,102]};
+const MI={
+ 73:['Sun 28 Jun','SoFi Stadium, Inglewood'],74:['Mon 29 Jun','Gillette Stadium, Foxborough'],75:['Mon 29 Jun','Estadio BBVA, Guadalupe'],76:['Mon 29 Jun','NRG Stadium, Houston'],
+ 77:['Tue 30 Jun','MetLife Stadium, East Rutherford'],78:['Tue 30 Jun','AT&T Stadium, Arlington'],79:['Tue 30 Jun','Estadio Azteca, Mexico City'],80:['Wed 1 Jul','Mercedes-Benz Stadium, Atlanta'],
+ 81:['Wed 1 Jul',"Levi's Stadium, Santa Clara"],82:['Wed 1 Jul','Lumen Field, Seattle'],83:['Thu 2 Jul','BMO Field, Toronto'],84:['Thu 2 Jul','SoFi Stadium, Inglewood'],
+ 85:['Thu 2 Jul','BC Place, Vancouver'],86:['Fri 3 Jul','Hard Rock Stadium, Miami Gardens'],87:['Fri 3 Jul','Arrowhead Stadium, Kansas City'],88:['Fri 3 Jul','AT&T Stadium, Arlington'],
+ 89:['Sat 4 Jul','Lincoln Financial Field, Philadelphia'],90:['Sat 4 Jul','NRG Stadium, Houston'],91:['Sun 5 Jul','MetLife Stadium, East Rutherford'],92:['Sun 5 Jul','Estadio Azteca, Mexico City'],
+ 93:['Mon 6 Jul','AT&T Stadium, Arlington'],94:['Mon 6 Jul','Lumen Field, Seattle'],95:['Tue 7 Jul','Mercedes-Benz Stadium, Atlanta'],96:['Tue 7 Jul','BC Place, Vancouver'],
+ 97:['Thu 9 Jul','Gillette Stadium, Foxborough'],98:['Fri 10 Jul','SoFi Stadium, Inglewood'],99:['Sat 11 Jul','Hard Rock Stadium, Miami Gardens'],100:['Sat 11 Jul','Arrowhead Stadium, Kansas City'],
+ 101:['Tue 14 Jul','AT&T Stadium, Arlington'],102:['Wed 15 Jul','Mercedes-Benz Stadium, Atlanta'],103:['Sat 18 Jul','Hard Rock Stadium, Miami Gardens'],104:['Sun 19 Jul','MetLife Stadium, East Rutherford']};
+const cur=(g,p)=>GROUPS[g][p-1][0];
+const part=(s,m)=> s.type==='Win'?cur(s.grp,1): s.type==='RU'?cur(s.grp,2): cur(THIRD_FIXED[m],3);
+const parts=m=>R32[m].map(s=>part(s,m));
+const RMETA={r32:['Round of 32','#2ea6ff'],r16:['Round of 16','#19b86b'],qf:['Quarter-final','#15c2a8'],sf:['Semi-final','#a78bfa'],tp:['Third place','#8fa69c'],f:['Final','#f4c430']};
+const rkey=m=>m<=88?'r32':m<=96?'r16':m<=100?'qf':m<=102?'sf':m===103?'tp':'f';
+const fl=t=>FLAG[t]||'🏳️';
+
+function matchup(m){
+ if(R32[m]){ const[a,b]=parts(m);
+   if(RESULTS[m]){ const w=RESULTS[m];
+     const A=w===a?`<b class="win">${fl(a)} ${a}</b>`:`${fl(a)} ${a}`;
+     const B=w===b?`<b class="win">${fl(b)} ${b}</b>`:`${fl(b)} ${b}`;
+     return `${A}<span class="sc">${SCORES[m]||''}</span>${B}`; }
+   return `${fl(a)} ${a}<span class="v">v</span>${fl(b)} ${b}`;
+ }
+ const side=c=> R32[c] ? (RESULTS[c]?`${fl(RESULTS[c])} ${RESULTS[c]}`:parts(c).map(t=>`${fl(t)} ${t}`).join(' / ')) : 'Winner M'+c;
+ const[x,y]=FEED[m];
+ return `${side(x)}<span class="v">v</span>${side(y)}`;
+}
+
+/* build the day grid: 28 days from Sun 28 Jun */
+const MON={Jun:6,Jul:7};
+function parseDay(str){ const p=str.split(' '); return {d:+p[1], mon:p[2]}; } // 'Sun 28 Jun'
+// group matches by date key 'mon-d'
+const byDay={};
+for(const m of Object.keys(MI).map(Number).sort((a,b)=>a-b)){
+ const {d,mon}=parseDay(MI[m][0]); const k=mon+'-'+d; (byDay[k]=byDay[k]||[]).push(m);
+}
+// today (browser)
+const now=new Date(); const todayKey=(now.getMonth()===5?'Jun':now.getMonth()===6?'Jul':'')+'-'+now.getDate();
+// 28 sequential days starting Jun 28
+const seq=[]; let d=28, mon='Jun';
+for(let i=0;i<28;i++){ seq.push({d,mon}); if(mon==='Jun'&&d===30){mon='Jul';d=1;} else d++; }
+
+document.getElementById('legend').innerHTML=Object.values(RMETA).map(([n,c])=>`<span class="lg"><i style="background:${c}"></i>${n}</span>`).join('');
+
+document.getElementById('cal').innerHTML=seq.map(({d,mon})=>{
+ const k=mon+'-'+d, ms=byDay[k]||[], today=k===todayKey;
+ const evs=ms.map(m=>{ const[rn,rc]=RMETA[rkey(m)]; const[date,ven]=MI[m]; const city=ven.split(', ')[1]||ven;
+   return `<div class="ev" style="border-left-color:${rc}"><span class="rd" style="color:${rc}">${rn} · M${m}</span>`+
+     `<span class="mt">${matchup(m)}</span><span class="vn">📍 ${city}</span></div>`;
+ }).join('');
+ return `<div class="day ${ms.length?'':'empty'} ${today?'today':''}"><div class="dnum">${mon} ${d}</div><div class="events">${evs}</div></div>`;
+}).join('');
+</script>
+</body>
+</html>
