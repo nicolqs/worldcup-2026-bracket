@@ -313,11 +313,6 @@
     <div class="bracketwrap"><div class="scrollhint">← swipe across the bracket →</div><div id="fullbracket" class="fullbracket"></div></div>
   </section>
 
-  <section class="panel" aria-label="Match centre">
-    <h2>⚽ Match Centre <span class="sub">Marquee Round-of-32 ties — final result, or model Win / Draw / Loss forecast</span></h2>
-    <div id="featured" class="feat"></div>
-  </section>
-
   <div class="board">
     <section class="panel" aria-label="Title race">
       <h2>🥇 Title Race <span class="sub">Championship probability — tap a team</span></h2>
@@ -702,7 +697,7 @@ function renderFeatured(){
 function boot(force){
  ensureSim(force);
  const safe=(fn)=>{ try{ fn(); }catch(e){ console.error(e); } };
- safe(renderFullBracket); safe(renderFeatured); safe(renderLeaderboard); safe(renderGroups);
+ safe(renderFullBracket); safe(renderLeaderboard); safe(renderGroups);
  if(SELECTED) safe(()=>selectTeam(SELECTED));
 }
 $('go').onclick=()=>{ acClose(); const t=findTeam($('q').value); if(t)selectTeam(t); else $('status').textContent='No matching country — try a full name like “Brazil” or “United States”.'; };
