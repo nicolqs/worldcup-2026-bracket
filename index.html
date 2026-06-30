@@ -27,6 +27,7 @@
     color:var(--txt);font-family:var(--body);font-size:15px;line-height:1.5;overflow-x:hidden;
     -webkit-tap-highlight-color:transparent}
   .tnum{font-variant-numeric:tabular-nums}
+  .fr{color:var(--dim);font-weight:700;font-size:.74em;letter-spacing:.01em;white-space:nowrap}
   a{color:var(--sky)}
   button{font-family:inherit}
   :focus-visible{outline:2.5px solid var(--sky);outline-offset:2px;border-radius:8px}
@@ -380,14 +381,26 @@ const FLAG={
  'Argentina':'🇦🇷','Austria':'🇦🇹','Algeria':'🇩🇿','Jordan':'🇯🇴','Colombia':'🇨🇴','Portugal':'🇵🇹',
  'DR Congo':'🇨🇩','Uzbekistan':'🇺🇿','England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Ghana':'🇬🇭','Croatia':'🇭🇷','Panama':'🇵🇦'
 };
+// Model strength = official FIFA ranking points (June/Jul 2026). Lower-ranked teams
+// without a published figure handy are approximated from their rank.
 const RATING={
- 'Argentina':2090,'France':2148,'Spain':2098,'Brazil':2052,'England':2072,'Portugal':2052,'Netherlands':2030,'Germany':2014,
- 'Belgium':1965,'Uruguay':1955,'Croatia':1950,'Morocco':1950,'Colombia':1945,'Japan':1905,'Switzerland':1905,'Senegal':1900,
- 'United States':1875,'Mexico':1860,'Norway':1860,'Ecuador':1850,'Austria':1845,'Turkiye':1840,'Sweden':1835,'Ivory Coast':1825,
- 'South Korea':1820,'Canada':1820,'Egypt':1815,'Algeria':1810,'Czechia':1810,'Iran':1805,'Scotland':1805,'Bosnia and Herzegovina':1800,
- 'Paraguay':1790,'Ghana':1785,'Australia':1785,'Tunisia':1760,'South Africa':1760,'DR Congo':1745,'Saudi Arabia':1720,'Uzbekistan':1715,
- 'Panama':1705,'Qatar':1705,'Iraq':1700,'Cape Verde':1685,'New Zealand':1685,'Jordan':1665,'Curacao':1645,'Haiti':1625
+ 'Argentina':1907,'France':1907,'Spain':1880,'England':1840,'Brazil':1805,'Morocco':1776,'Netherlands':1776,'Portugal':1765,
+ 'Mexico':1736,'Belgium':1735,'Colombia':1729,'Germany':1726,'Croatia':1723,'United States':1677,'Switzerland':1676,'Japan':1654,
+ 'Senegal':1653,'Uruguay':1635,'Norway':1618,'Iran':1610,'Austria':1599,'Ecuador':1593,'Egypt':1585,'Turkiye':1583,
+ 'Australia':1581,'Algeria':1577,'Canada':1571,'South Korea':1559,'Ivory Coast':1542,'Sweden':1526,'Paraguay':1521,'Panama':1505,
+ 'Scotland':1491,'Czechia':1467,'Tunisia':1455,'DR Congo':1450,'Uzbekistan':1425,'Qatar':1395,'Iraq':1390,'South Africa':1375,
+ 'Saudi Arabia':1370,'Jordan':1360,'Bosnia and Herzegovina':1355,'Cape Verde':1335,'Ghana':1300,'Curacao':1245,'Haiti':1240,'New Zealand':1230
 };
+// Official FIFA world ranking position (June 2026).
+const RANK={
+ 'Argentina':1,'Spain':2,'France':3,'England':4,'Portugal':5,'Brazil':6,'Morocco':7,'Netherlands':8,'Belgium':9,'Germany':10,
+ 'Croatia':11,'Colombia':13,'Mexico':14,'Senegal':15,'Uruguay':16,'United States':17,'Japan':18,'Switzerland':19,'Iran':20,
+ 'Ecuador':23,'Austria':24,'South Korea':25,'Australia':27,'Algeria':28,'Egypt':29,'Canada':30,'Norway':31,'Turkiye':32,
+ 'Ivory Coast':33,'Panama':34,'Sweden':38,'Czechia':40,'Paraguay':41,'Scotland':42,'Tunisia':45,'DR Congo':46,'Uzbekistan':50,
+ 'Qatar':56,'Iraq':57,'South Africa':60,'Saudi Arabia':61,'Jordan':63,'Bosnia and Herzegovina':64,'Cape Verde':67,'Ghana':73,
+ 'Curacao':82,'Haiti':83,'New Zealand':85
+};
+const rk=t=>RANK[t]?` <span class="fr">#${RANK[t]}</span>`:'';
 /* ===================== BRACKET ===================== */
 const S=(t,g)=>({type:t,grp:g,key:t+' '+g});
 const S3=set=>({type:'3rd',set,key:'3rd '+set.join('')});
@@ -461,7 +474,7 @@ function computePath(team,scn){
 function renderPath(path){
  return '<div class="bracketwrap"><div class="scrollhint">← swipe across the rounds →</div><div class="bracket">'+path.steps.map(st=>{
    const[d,v]=MI[st.match]; const fin=ROUND(st.match)==='Final';
-   const opps=st.opps.map(c=>`<div class="team ${c.beaten?'tbd out':(c.ok?'ok':'tbd')}"><span class="fl">${c.flag}</span> ${c.name}${c.ok?' <span class="badge">in R16</span>':''}${c.beaten?' <span class="badge">out</span>':''}</div>`).join('');
+   const opps=st.opps.map(c=>`<div class="team ${c.beaten?'tbd out':(c.ok?'ok':'tbd')}"><span class="fl">${c.flag}</span> ${c.name}${rk(c.name)}${c.ok?' <span class="badge">in R16</span>':''}${c.beaten?' <span class="badge">out</span>':''}</div>`).join('');
    return `<div class="col ${fin?'final':''}"><h3>${fin?'★ ':''}${ROUND(st.match)}</h3><div class="when">${d} · ${v.split(', ')[1]}</div>
      <div class="match"><div class="mhead"><span class="mno">MATCH ${st.match}</span><span class="venue">${v.replace(', ','<br>')}</span></div>
        <div class="me"><span>${path.flag}</span> ${path.team}</div><div class="vs">— ${st.oppLabel} —</div>
@@ -539,14 +552,14 @@ function renderLeaderboard(){
  const max=Math.max(...rows.map(r=>r.win),0.01);
  $('leaderboard').innerHTML=rows.map((r,i)=>
    `<button class="lbrow ${i===0?'lead':''}" type="button" data-team="${r.t}"><span class="rk tnum">${i+1}</span><span class="fl">${FLAG[r.t]||''}</span>
-     <span class="nm">${r.t}</span><span class="bar"><i style="width:${(r.win/max*100).toFixed(1)}%"></i></span>
+     <span class="nm">${r.t}${rk(r.t)}</span><span class="bar"><i style="width:${(r.win/max*100).toFixed(1)}%"></i></span>
      <span class="pc tnum">${pct(r.win)}</span></button>`).join('');
  document.querySelectorAll('.lbrow').forEach(el=>el.onclick=()=>selectTeam(el.dataset.team));
 }
 function renderGroups(){
  $('groups').innerHTML=GL.map(g=>{
    const rows=GROUPS[g].map((r,i)=>{const t=r[0];return `<button class="trow p${i+1}" type="button" data-team="${t}"><span class="ps tnum">${i+1}</span>
-     <span class="fl">${FLAG[t]||''}</span><span class="nm">${t}</span><span class="pt tnum">${r[1]} pts</span></button>`;}).join('');
+     <span class="fl">${FLAG[t]||''}</span><span class="nm">${t}${rk(t)}</span><span class="pt tnum">${r[1]} pts</span></button>`;}).join('');
    return `<div class="gcard"><div class="gh">Group ${g}</div>${rows}</div>`;
  }).join('');
  document.querySelectorAll('.trow').forEach(el=>el.onclick=()=>selectTeam(el.dataset.team));
@@ -564,7 +577,7 @@ function selectTeam(team,scn){
  const qualified = pos===1 || pos===2 || (pos===3 && Object.values(THIRD_FIXED).includes(g));
  const back=`<button class="backbtn" id="backBtn" type="button">‹ Back to All Teams</button>`;
  const head=`<div class="dhead"><span class="fl">${FLAG[team]||'🏳️'}</span>
-      <div><div class="nm">${team}</div>
+      <div><div class="nm">${team}${rk(team)}</div>
         <div class="meta">Group ${g} · finished ${posTxt} (${GROUPS[g][pos-1][1]} pts) · rating ${rt(team)}</div></div></div>`;
  if(!qualified){
    $('detail').innerHTML=back+head+
@@ -643,12 +656,12 @@ function renderFullBracket(){
      }
      const p=pWin(t1,t2);
      return `<div class="fbmatch r32" data-m="${m}"><div class="mlabel">M${m}</div>`+
-       `<div class="fbteam ${p>=.5?'fav':''}"><span class="fl">${fl(t1)}</span><span class="nm">${t1}</span><span class="pc">${pct(p)}</span></div>`+
-       `<div class="fbteam ${p<.5?'fav':''}"><span class="fl">${fl(t2)}</span><span class="nm">${t2}</span><span class="pc">${pct(1-p)}</span></div>`+
+       `<div class="fbteam ${p>=.5?'fav':''}"><span class="fl">${fl(t1)}</span><span class="nm">${t1}${rk(t1)}</span><span class="pc">${pct(p)}</span></div>`+
+       `<div class="fbteam ${p<.5?'fav':''}"><span class="fl">${fl(t2)}</span><span class="nm">${t2}${rk(t2)}</span><span class="pc">${pct(1-p)}</span></div>`+
        `<div class="fbpred">${predScore(t1,t2)}</div></div>`;
    }
    const[a,b]=FEED[m], fin=m===104;
-   const line=c=>{ if(R32[c]){ if(RESULTS[c]){const w=RESULTS[c];return `<span class="fbwin"><span class="fl">${fl(w)}</span> ${w}</span>`;} const[x,y]=r32t(c); return `${x} / ${y}`; } return 'Winner M'+c; };
+   const line=c=>{ if(R32[c]){ if(RESULTS[c]){const w=RESULTS[c];return `<span class="fbwin"><span class="fl">${fl(w)}</span> ${w}${rk(w)}</span>`;} const[x,y]=r32t(c); return `${x} / ${y}`; } return 'Winner M'+c; };
    return `<div class="fbmatch ${fin?'final':''}" data-m="${m}"><div class="mlabel">M${m}${fin?' · FINAL':''}</div>`+
      `<div class="fbplace">${line(a)}</div><div class="fbplace">${line(b)}</div></div>`;
  }
