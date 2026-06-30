@@ -210,6 +210,29 @@
   .fmeta{margin-top:10px;font-size:12px;color:var(--grass);font-weight:700}
   .fadv{margin-top:8px;font-size:13px;color:var(--grass);font-weight:800}
 
+  /* featured roads */
+  .roads{display:flex;flex-direction:column;gap:14px}
+  .rcard{position:relative;background:linear-gradient(180deg,var(--surface),var(--surface2));
+    border:1px solid var(--line);border-radius:16px;padding:14px 16px 14px 22px;overflow:hidden}
+  .rcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--ac)}
+  .rhd{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .rflag{font-size:30px;line-height:1}
+  .rname{font-size:18px;font-weight:800}
+  .rwin{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.05}
+  .rwin b{font-size:21px;color:var(--sky);font-weight:900}
+  .rwin small,.rdiff small{font-size:9.5px;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .rdiff{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:104px}
+  .rdiff .rdval{font-size:21px;font-weight:900;color:var(--ac);line-height:1}
+  .rdbar{width:104px;height:6px;border-radius:3px;background:#0a1714;overflow:hidden}
+  .rdbar i{display:block;height:100%;background:var(--ac);border-radius:3px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+  .rpath{display:flex;align-items:flex-end;flex-wrap:wrap;gap:5px}
+  .rseg{display:flex;flex-direction:column;gap:4px}
+  .rrd{font-size:9px;font-weight:800;letter-spacing:.09em;color:var(--dim);padding-left:3px}
+  .rop{font-size:12.5px;font-weight:700;color:var(--c);white-space:nowrap;border-radius:9px;padding:6px 10px;
+    background:color-mix(in srgb,var(--c) 13%,transparent);border:1px solid color-mix(in srgb,var(--c) 36%,transparent)}
+  .rar{color:var(--dim);font-size:15px;font-weight:800;padding-bottom:6px;opacity:.55}
+  @media(max-width:560px){.rwin{margin-left:0}.rop{font-size:11.5px;padding:5px 8px}}
+
   /* full bracket */
   .fullbracket{position:relative;display:flex;align-items:stretch;gap:10px;overflow-x:auto;padding:4px 0 12px;
     scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
@@ -332,6 +355,11 @@
     </section>
   </div>
 
+  <section class="panel" aria-label="Featured roads">
+    <h2>🛣️ Featured Roads to the Final <span class="sub">France · Argentina · Brazil — opponents each round &amp; path difficulty</span></h2>
+    <div id="roads" class="roads"></div>
+  </section>
+
   <div class="controls">
     <p class="disc">⚠️ Probabilities are a heuristic model (team strength + current standings) — an estimate, not official odds.</p>
   </div>
@@ -384,7 +412,7 @@ const FLAG={
 // Model strength = official FIFA ranking points (June/Jul 2026). Lower-ranked teams
 // without a published figure handy are approximated from their rank.
 const RATING={
- 'Argentina':1907,'France':1907,'Spain':1880,'England':1840,'Brazil':1805,'Morocco':1776,'Netherlands':1776,'Portugal':1765,
+ 'Argentina':1907,'France':1906,'Spain':1880,'England':1840,'Brazil':1805,'Morocco':1789,'Netherlands':1776,'Portugal':1765,
  'Mexico':1736,'Belgium':1735,'Colombia':1729,'Germany':1726,'Croatia':1723,'United States':1677,'Switzerland':1676,'Japan':1654,
  'Senegal':1653,'Uruguay':1635,'Norway':1618,'Iran':1610,'Austria':1599,'Ecuador':1593,'Egypt':1585,'Turkiye':1583,
  'Australia':1581,'Algeria':1577,'Canada':1571,'South Korea':1559,'Ivory Coast':1542,'Sweden':1526,'Paraguay':1521,'Panama':1505,
@@ -393,8 +421,8 @@ const RATING={
 };
 // Official FIFA world ranking position (June 2026).
 const RANK={
- 'Argentina':1,'Spain':2,'France':3,'England':4,'Portugal':5,'Brazil':6,'Morocco':7,'Netherlands':8,'Belgium':9,'Germany':10,
- 'Croatia':11,'Colombia':13,'Mexico':14,'Senegal':15,'Uruguay':16,'United States':17,'Japan':18,'Switzerland':19,'Iran':20,
+ 'Argentina':1,'France':2,'Spain':3,'England':4,'Brazil':5,'Morocco':6,'Netherlands':7,'Portugal':8,'Mexico':9,'Belgium':10,
+ 'Colombia':11,'Croatia':12,'Germany':13,'Senegal':15,'Uruguay':16,'United States':17,'Japan':18,'Switzerland':19,'Iran':20,
  'Ecuador':23,'Austria':24,'South Korea':25,'Australia':27,'Algeria':28,'Egypt':29,'Canada':30,'Norway':31,'Turkiye':32,
  'Ivory Coast':33,'Panama':34,'Sweden':38,'Czechia':40,'Paraguay':41,'Scotland':42,'Tunisia':45,'DR Congo':46,'Uzbekistan':50,
  'Qatar':56,'Iraq':57,'South Africa':60,'Saudi Arabia':61,'Jordan':63,'Bosnia and Herzegovina':64,'Cape Verde':67,'Ghana':73,
@@ -710,10 +738,51 @@ function renderFeatured(){
  }).join('');
 }
 
+/* ---- featured roads (France / Argentina / Brazil path + difficulty) ---- */
+const ROAD_TEAMS=['France','Argentina','Brazil'];
+function diffLabel(d){return d<46?'Comfortable':d<58?'Tough':d<70?'Very tough':'Brutal';}
+// Difficulty = mean EXPECTED opponent FIFA points across all remaining rounds,
+// each round weighted by how likely each possible opponent is to actually be there.
+const REACHK=['','r16','qf','sf','fin'];
+function teamDifficulty(team){
+ const p=computePath(team);
+ if(!p||p.eliminated||!p.steps) return 0;
+ let sum=0,n=0;
+ p.steps.forEach((st,i)=>{
+   const ns=st.opps; if(!ns.length) return;
+   let exp;
+   if(i===0){ exp=ns.reduce((a,c)=>a+rt(c.name),0)/ns.length; }
+   else { let ws=0,wr=0; ns.forEach(c=>{const w=(SIM[c.name]&&SIM[c.name][REACHK[i]])||0.0001; ws+=w; wr+=w*rt(c.name);}); exp=wr/ws; }
+   sum+=exp; n++;
+ });
+ const mean=sum/n;
+ return Math.max(0,Math.min(100,Math.round((mean-1480)/(1780-1480)*100)));
+}
+function renderRoads(){
+ const RN=['R32','R16','QF','SF','Final'];
+ $('roads').innerHTML=ROAD_TEAMS.map(team=>{
+   const p=computePath(team), s=SIM[team]||{win:0};
+   if(!p||p.eliminated) return '';
+   const D=teamDifficulty(team), dc=D>=66?'var(--red)':D>=52?'var(--gold)':'var(--grass)';
+   const segs=p.steps.map((st,i)=>{
+     const ns=st.opps, sorted=ns.slice().sort((a,b)=>rt(b.name)-rt(a.name));
+     const avg=ns.reduce((a,c)=>a+rt(c.name),0)/ns.length;
+     const col=avg>=1760?'var(--red)':avg>=1600?'var(--gold)':'var(--grass)';
+     let label= st.done ? (ns[0]?'✓ beat '+ns[0].name:'') : ns.length===1?ns[0].name : ns.length===2?(ns[0].name+' / '+ns[1].name) : (sorted[0].name+' +'+(ns.length-1));
+     return `<span class="rseg"><span class="rrd">${RN[i]}</span><span class="rop" style="--c:${col}">${label}</span></span>`;
+   }).join('<span class="rar">›</span>');
+   return `<div class="rcard" style="--ac:${dc}">
+     <div class="rhd"><span class="rflag">${FLAG[team]}</span><span class="rname">${team}${rk(team)}</span>
+       <span class="rwin"><b>${pct(s.win)}</b><small>to win cup</small></span>
+       <span class="rdiff"><span class="rdval">${D}</span><small>difficulty · ${diffLabel(D)}</small><span class="rdbar"><i style="width:${D}%"></i></span></span></div>
+     <div class="rpath">${segs}</div></div>`;
+ }).join('');
+}
+
 function boot(force){
  ensureSim(force);
  const safe=(fn)=>{ try{ fn(); }catch(e){ console.error(e); } };
- safe(renderFullBracket); safe(renderLeaderboard); safe(renderGroups);
+ safe(renderFullBracket); safe(renderLeaderboard); safe(renderGroups); safe(renderRoads);
  if(SELECTED) safe(()=>selectTeam(SELECTED));
 }
 $('go').onclick=()=>{ acClose(); const t=findTeam($('q').value); if(t)selectTeam(t); else $('status').textContent='No matching country — try a full name like “Brazil” or “United States”.'; };
