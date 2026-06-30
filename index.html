@@ -556,7 +556,9 @@ function runSim(N){
 /* ===================== CACHE ===================== */
 const PFX='wc26_', TTL=3600*1000;
 const SIM_N=20000;
-function simKey(){return PFX+'sim_'+SIM_N;}
+// signature of the inputs so any change to ratings/results busts the cached sim
+function dataSig(){let s=7,str=JSON.stringify(RESULTS)+'|'+JSON.stringify(RATING);for(let i=0;i<str.length;i++)s=(s*31+str.charCodeAt(i))>>>0;return s.toString(36);}
+function simKey(){return PFX+'sim_'+SIM_N+'_'+dataSig();}
 function getSim(){ try{const o=JSON.parse(localStorage.getItem(simKey())); if(o&&Date.now()-o.ts<TTL)return o;}catch(e){} return null; }
 function setSim(data){ try{localStorage.setItem(simKey(),JSON.stringify({ts:Date.now(),data}));}catch(e){} }
 function clearCache(){ Object.keys(localStorage).filter(k=>k.startsWith(PFX)).forEach(k=>localStorage.removeItem(k)); }
@@ -770,7 +772,11 @@ function renderRoads(){
      if(i===0){ exp=ns.reduce((a,c)=>a+rt(c.name),0)/ns.length; }
      else { let ws=0,wr=0; ns.forEach(c=>{const w=(SIM[c.name]&&SIM[c.name][REACHK[i]])||0.0001; ws+=w; wr+=w*rt(c.name);}); exp=wr/ws; }
      const col=exp>=1760?'var(--red)':exp>=1620?'var(--gold)':'var(--grass)';
-     let label= st.done ? (ns[0]?'✓ beat '+ns[0].name:'') : ns.length===1?ns[0].name : ns.length===2?(ns[0].name+' / '+ns[1].name) : (sorted[0].name+' +'+(ns.length-1));
+     const tag=c=>c.name+rk(c.name);
+     let label= st.done ? (ns[0]?'✓ beat '+tag(ns[0]):'')
+       : ns.length===1 ? tag(ns[0])
+       : ns.length===2 ? (tag(ns[0])+' / '+tag(ns[1]))
+       : (tag(sorted[0])+' / '+tag(sorted[1]));
      return `<span class="rseg"><span class="rrd">${RN[i]}</span><span class="rop" style="--c:${col}">${label}</span></span>`;
    }).join('<span class="rar">›</span>');
    return `<div class="rcard" style="--ac:${dc}">
