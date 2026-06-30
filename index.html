@@ -766,8 +766,10 @@ function renderRoads(){
    const D=teamDifficulty(team), dc=D>=66?'var(--red)':D>=52?'var(--gold)':'var(--grass)';
    const segs=p.steps.map((st,i)=>{
      const ns=st.opps, sorted=ns.slice().sort((a,b)=>rt(b.name)-rt(a.name));
-     const avg=ns.reduce((a,c)=>a+rt(c.name),0)/ns.length;
-     const col=avg>=1760?'var(--red)':avg>=1600?'var(--gold)':'var(--grass)';
+     let exp;
+     if(i===0){ exp=ns.reduce((a,c)=>a+rt(c.name),0)/ns.length; }
+     else { let ws=0,wr=0; ns.forEach(c=>{const w=(SIM[c.name]&&SIM[c.name][REACHK[i]])||0.0001; ws+=w; wr+=w*rt(c.name);}); exp=wr/ws; }
+     const col=exp>=1760?'var(--red)':exp>=1620?'var(--gold)':'var(--grass)';
      let label= st.done ? (ns[0]?'✓ beat '+ns[0].name:'') : ns.length===1?ns[0].name : ns.length===2?(ns[0].name+' / '+ns[1].name) : (sorted[0].name+' +'+(ns.length-1));
      return `<span class="rseg"><span class="rrd">${RN[i]}</span><span class="rop" style="--c:${col}">${label}</span></span>`;
    }).join('<span class="rar">›</span>');
