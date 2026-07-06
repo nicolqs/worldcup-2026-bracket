@@ -338,7 +338,7 @@
   <section id="detail" class="panel" aria-label="Selected team"></section>
 
   <section class="panel" aria-label="Full bracket">
-    <h2>🗺️ Full Bracket <span class="sub">As it stands — win % for each decided Round-of-32 match</span></h2>
+    <h2>🗺️ Full Bracket <span class="sub">As it stands — results through the Round of 16, win % for the rest</span></h2>
     <p class="hint">Slots aren't final, so they update after every match. Third-place qualifiers are projected by points (tiebreaks not modelled). Tap a Round-of-32 match for the predicted score.</p>
     <div class="bracketwrap"><div class="scrollhint">← swipe across the bracket →</div><div id="fullbracket" class="fullbracket"></div></div>
   </section>
@@ -356,7 +356,7 @@
   </div>
 
   <section class="panel" aria-label="Featured roads">
-    <h2>🛣️ Featured Roads to the Final <span class="sub">France · Argentina · Brazil — opponents each round &amp; path difficulty</span></h2>
+    <h2>🛣️ Featured Roads to the Final <span class="sub">France · Argentina · England — opponents each round &amp; path difficulty</span></h2>
     <div id="roads" class="roads"></div>
   </section>
 
@@ -386,19 +386,19 @@ const GROUPS={
  H:[['Spain',7],['Cape Verde',3],['Uruguay',2],['Saudi Arabia',2]],
  I:[['France',9],['Norway',6],['Senegal',3],['Iraq',0]],
  J:[['Argentina',6],['Austria',3],['Algeria',3],['Jordan',0]],
- K:[['Colombia',7],['Portugal',5],['Uzbekistan',3],['DR Congo',1]],
+ K:[['Colombia',7],['Portugal',5],['DR Congo',4],['Uzbekistan',0]],
  L:[['England',7],['Croatia',6],['Ghana',4],['Panama',0]],
 };
 /* slots already mathematically locked (from Wikipedia knockout page) */
-const LOCK={Win:{A:1,B:1,C:1,D:1,E:1,F:1,G:1,H:1,I:1,J:1,K:1,L:1},RU:{A:1,B:1,C:1,D:1,E:1,F:1,G:1,H:1,I:1,J:1,K:1,L:1},Th:{A:1,B:1,D:1,E:1,F:1,G:1,K:1,L:1}};
+const LOCK={Win:{A:1,B:1,C:1,D:1,E:1,F:1,G:1,H:1,I:1,J:1,K:1,L:1},RU:{A:1,B:1,C:1,D:1,E:1,F:1,G:1,H:1,I:1,J:1,K:1,L:1},Th:{B:1,D:1,E:1,F:1,I:1,J:1,K:1,L:1}};
 // Confirmed R32 third-place slot assignments (group stage complete) -> group letter.
-const THIRD_FIXED={74:'D',77:'F',79:'E',80:'K',81:'B',82:'A',85:'G',87:'L'};
+const THIRD_FIXED={74:'D',77:'F',79:'E',80:'K',81:'B',82:'I',85:'J',87:'L'};
 // Played knockout matches -> team that advanced (forces the result in bracket + simulation).
-const RESULTS={73:'Canada',74:'Paraguay',75:'Morocco',76:'Brazil',77:'France',78:'Norway',79:'Mexico'};
+const RESULTS={73:'Canada',74:'Paraguay',75:'Morocco',76:'Brazil',77:'France',78:'Norway',79:'Mexico',80:'England',81:'United States',82:'Belgium',83:'Portugal',84:'Spain',85:'Switzerland',86:'Argentina',87:'Colombia',88:'Egypt',89:'France',90:'Morocco',91:'Norway',92:'England'};
 // Final scores for played matches, oriented as [slot1]–[slot2] (slot order in R32).
-const SCORES={73:'0–1',74:'1–1 (3–4p)',75:'1–1 (2–3p)',76:'2–1',77:'3–0',78:'1–2',79:'2–0'};
+const SCORES={73:'0–1',74:'1–1 (3–4p)',75:'1–1 (2–3p)',76:'2–1',77:'3–0',78:'1–2',79:'2–0',80:'2–1',81:'2–0',82:'3–2 (a.e.t.)',83:'2–1',84:'3–0',85:'2–0',86:'3–2 (a.e.t.)',87:'1–0',88:'1–1 (2–4p)',89:'0–1',90:'0–3',91:'1–2',92:'2–3'};
 // Marquee matches to feature in the Match Centre (match numbers).
-const FEATURED=[77,76,73];
+const FEATURED=[82,86,88];
 const FLAG={
  'Mexico':'🇲🇽','South Africa':'🇿🇦','South Korea':'🇰🇷','Czechia':'🇨🇿','Switzerland':'🇨🇭','Canada':'🇨🇦',
  'Bosnia and Herzegovina':'🇧🇦','Qatar':'🇶🇦','Brazil':'🇧🇷','Morocco':'🇲🇦','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Haiti':'🇭🇹',
@@ -691,7 +691,12 @@ function renderFullBracket(){
        `<div class="fbpred">${predScore(t1,t2)}</div></div>`;
    }
    const[a,b]=FEED[m], fin=m===104;
-   const line=c=>{ if(R32[c]){ if(RESULTS[c]){const w=RESULTS[c];return `<span class="fbwin"><span class="fl">${fl(w)}</span> ${w}${rk(w)}</span>`;} const[x,y]=r32t(c); return `${x} / ${y}`; } return 'Winner M'+c; };
+   if(RESULTS[m]){ const w=RESULTS[m], t1=RESULTS[a], t2=RESULTS[b], l=(w===t1?t2:t1);
+     return `<div class="fbmatch done" data-m="${m}"><div class="mlabel">M${m}${fin?' · FINAL':' · FT'}</div>`+
+       `<div class="fbteam fav"><span class="fl">${fl(w)}</span><span class="nm">${w}</span><span class="pc">${fin?'🏆':'✓'}</span></div>`+
+       `<div class="fbteam out"><span class="fl">${fl(l)}</span><span class="nm">${l}</span><span class="pc">out</span></div></div>`;
+   }
+   const line=c=>{ if(RESULTS[c]){const w=RESULTS[c];return `<span class="fbwin"><span class="fl">${fl(w)}</span> ${w}${rk(w)}</span>`;} if(R32[c]){ const[x,y]=r32t(c); return `${x} / ${y}`; } return 'Winner M'+c; };
    return `<div class="fbmatch ${fin?'final':''}" data-m="${m}"><div class="mlabel">M${m}${fin?' · FINAL':''}</div>`+
      `<div class="fbplace">${line(a)}</div><div class="fbplace">${line(b)}</div></div>`;
  }
@@ -741,7 +746,7 @@ function renderFeatured(){
 }
 
 /* ---- featured roads (France / Argentina / Brazil path + difficulty) ---- */
-const ROAD_TEAMS=['France','Argentina','Brazil'];
+const ROAD_TEAMS=['France','Argentina','England'];
 function diffLabel(d){return d<46?'Comfortable':d<58?'Tough':d<70?'Very tough':'Brutal';}
 // Difficulty = mean EXPECTED opponent FIFA points across all remaining rounds,
 // each round weighted by how likely each possible opponent is to actually be there.
