@@ -542,7 +542,7 @@ function simulateOnce(reached){
    W[m]=RESULTS[m]||play(t1,t2); mark(W[m],2);
  }
  const order=[89,90,91,92,93,94,95,96,97,98,99,100,101,102,104], rof=m=>m<=96?3:m<=100?4:m<=102?5:6;
- for(const m of order){ const[a,b]=FEED[m]; W[m]=play(W[a],W[b]); mark(W[m],rof(m)); }
+ for(const m of order){ const[a,b]=FEED[m]; W[m]=RESULTS[m]||play(W[a],W[b]); mark(W[m],rof(m)); }
  return W[104];
 }
 function runSim(N){
