@@ -477,7 +477,7 @@ function r32Teams(m){
  const part=s=> s.type==='Win'?cur(s.grp,1): s.type==='RU'?cur(s.grp,2): cur(THIRD_FIXED[m],3);
  return R32[m].map(part);
 }
-function leafTeams(m){ if(R32[m]) return r32Teams(m); const[a,b]=FEED[m]; return leafTeams(a).concat(leafTeams(b)); }
+function leafTeams(m){ if(RESULTS[m]) return [RESULTS[m]]; if(R32[m]) return r32Teams(m); const[a,b]=FEED[m]; return leafTeams(a).concat(leafTeams(b)); }
 function slotForTeam(team,scn){
  const {g,pos}=POS[team];
  const type = scn==='win'?'Win': scn==='ru'?'RU': scn==='third'?'3rd': (pos===1?'Win':pos===2?'RU':pos===3?'3rd':null);
@@ -491,18 +491,29 @@ function computePath(team,scn){
  const chip=t=>({name:t,flag:FLAG[t]||'⚽',ok:through.has(t)});
  const part=s=> s.type==='Win'?cur(s.grp,1): s.type==='RU'?cur(s.grp,2): cur(THIRD_FIXED[m0],3);
  const parts=R32[m0].map(part), opp0=parts[0]===team?parts[1]:parts[0];
- if(RESULTS[m0] && RESULTS[m0]!==team) return {team,flag:FLAG[team]||'🏳️',eliminated:true,by:RESULTS[m0]};
+ // Round of 32: elimination check + step
+ if(RESULTS[m0] && RESULTS[m0]!==team) return {team,flag:FLAG[team]||'🏳️',eliminated:true,by:RESULTS[m0],round:ROUND(m0)};
  const won0=RESULTS[m0]===team;
  const steps=[{match:m0, opps:[{name:opp0,flag:FLAG[opp0]||'⚽',beaten:won0}], oppLabel:won0?'beat':'plays', done:won0}];
+ // Walk R16 -> Final; check each PLAYED match for elimination, pin the opponent once it's decided.
  let curm=m0,p=parentOf(curm);
- while(p){ const sib=FEED[p].find(x=>x!==curm);
-   steps.push({match:p, opps:Array.from(new Set(leafTeams(sib))).map(chip), oppLabel:'possible opponents'}); curm=p; p=parentOf(curm); }
+ while(p){ const sib=FEED[p].find(x=>x!==curm), sibW=RESULTS[sib];
+   if(RESULTS[p]){
+     if(RESULTS[p]!==team) return {team,flag:FLAG[team]||'🏳️',eliminated:true,by:RESULTS[p],round:ROUND(p)};
+     steps.push({match:p, opps:[{name:sibW,flag:FLAG[sibW]||'⚽',beaten:true}], oppLabel:'beat', done:true});
+   } else if(sibW){
+     steps.push({match:p, opps:[chip(sibW)], oppLabel:'plays'});
+   } else {
+     steps.push({match:p, opps:Array.from(new Set(leafTeams(sib))).map(chip), oppLabel:'possible opponents'});
+   }
+   curm=p; p=parentOf(curm);
+ }
  return {team,flag:FLAG[team]||'🏳️',slot:sl,steps};
 }
 function renderPath(path){
  return '<div class="bracketwrap"><div class="scrollhint">← swipe across the rounds →</div><div class="bracket">'+path.steps.map(st=>{
    const[d,v]=MI[st.match]; const fin=ROUND(st.match)==='Final';
-   const opps=st.opps.map(c=>`<div class="team ${c.beaten?'tbd out':(c.ok?'ok':'tbd')}"><span class="fl">${c.flag}</span> ${c.name}${rk(c.name)}${c.ok?' <span class="badge">in R16</span>':''}${c.beaten?' <span class="badge">out</span>':''}</div>`).join('');
+   const opps=st.opps.map(c=>`<div class="team ${c.beaten?'tbd out':(c.ok?'ok':'tbd')}"><span class="fl">${c.flag}</span> ${c.name}${rk(c.name)}${c.ok&&!c.beaten?' <span class="badge">through</span>':''}${c.beaten?' <span class="badge">out</span>':''}</div>`).join('');
    return `<div class="col ${fin?'final':''}"><h3>${fin?'★ ':''}${ROUND(st.match)}</h3><div class="when">${d} · ${v.split(', ')[1]}</div>
      <div class="match"><div class="mhead"><span class="mno">MATCH ${st.match}</span><span class="venue">${v.replace(', ','<br>')}</span></div>
        <div class="me"><span>${path.flag}</span> ${path.team}</div><div class="vs">— ${st.oppLabel} —</div>
@@ -619,7 +630,7 @@ function selectTeam(team,scn){
  }
  const path=computePath(team);
  const pathHtml = path && path.eliminated
-   ? `<p class="lock" style="color:var(--dim)">🛑 ${team} were knocked out by ${path.by} in the Round of 32.</p>`
+   ? `<p class="lock" style="color:var(--dim)">🛑 ${team} were knocked out by ${path.by} in the ${path.round||'Round of 32'}.</p>`
    : renderPath(path);
  $('detail').innerHTML=back+head+
    `<div class="prob">
@@ -629,7 +640,7 @@ function selectTeam(team,scn){
       ${probBar('Reach Final',p.fin,'linear-gradient(90deg,#19b86b,#15c2a8)')}
       ${probBar('Win the Cup 🏆',p.win,'linear-gradient(90deg,#0a7d5a,#f4c430)',true)}
     </div>
-    <div class="legend"><span><i class="dot" style="background:var(--grass)"></i> through to R16</span>
+    <div class="legend"><span><i class="dot" style="background:var(--grass)"></i> still alive</span>
       <span><i class="dot" style="background:var(--line)"></i> still to play</span>
       <span><i class="dot" style="background:var(--gold)"></i> final</span></div>
     <h2 style="margin-top:8px">🧭 Possible Road for ${team} <span class="sub">opponents who can reach each round</span></h2>
