@@ -345,7 +345,7 @@
 
   <div class="board">
     <section class="panel" aria-label="Title race">
-      <h2>🥇 Title Race <span class="sub">Championship probability — tap a team</span></h2>
+      <h2>🥇 Title Race <span class="sub">Championship probability — FIFA rating + current form · tap a team</span></h2>
       <div id="leaderboard"></div>
     </section>
     <section class="panel" aria-label="Pick a team">
@@ -429,6 +429,11 @@ const RANK={
  'Curacao':82,'Haiti':83,'New Zealand':85
 };
 const rk=t=>RANK[t]?` <span class="fr">#${RANK[t]}</span>`:'';
+// Tournament-form adjustment (points added to the FIFA rating). FIFA rank is
+// a snapshot; this nudges strength toward what teams have shown here + the
+// betting market. France's attack has been the best; Argentina (aging core,
+// two extra-time escapes) has flattered the #1 rating.
+const FORM={'France':40,'Spain':20,'England':10,'Argentina':-45};
 /* ===================== BRACKET ===================== */
 const S=(t,g)=>({type:t,grp:g,key:t+' '+g});
 const S3=set=>({type:'3rd',set,key:'3rd '+set.join('')});
@@ -523,7 +528,7 @@ function renderPath(path){
 
 /* ===================== SIM (Monte-Carlo win probability) ===================== */
 function randn(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
-function rt(t){return RATING[t]||1750;}
+function rt(t){return (RATING[t]||1750)+(FORM[t]||0);}
 function pWin(a,b){return 1/(1+Math.pow(10,-(rt(a)-rt(b))/400));}
 function play(a,b){if(!a)return b;if(!b)return a;return Math.random()<pWin(a,b)?a:b;}
 function allocThirds(groupsOf8){
@@ -568,9 +573,9 @@ function runSim(N){
 const PFX='wc26_', TTL=3600*1000;
 const SIM_N=20000;
 // bump when the simulation LOGIC changes (not just data) so stale cached sims are invalidated
-const SIM_VER='v2-r16results';
+const SIM_VER='v3-form-adjust';
 // signature of the inputs so any change to ratings/results/logic busts the cached sim
-function dataSig(){let s=7,str=SIM_VER+'|'+JSON.stringify(RESULTS)+'|'+JSON.stringify(RATING);for(let i=0;i<str.length;i++)s=(s*31+str.charCodeAt(i))>>>0;return s.toString(36);}
+function dataSig(){let s=7,str=SIM_VER+'|'+JSON.stringify(RESULTS)+'|'+JSON.stringify(RATING)+'|'+JSON.stringify(FORM);for(let i=0;i<str.length;i++)s=(s*31+str.charCodeAt(i))>>>0;return s.toString(36);}
 function simKey(){return PFX+'sim_'+SIM_N+'_'+dataSig();}
 function getSim(){ try{const o=JSON.parse(localStorage.getItem(simKey())); if(o&&Date.now()-o.ts<TTL)return o;}catch(e){} return null; }
 function setSim(data){ try{localStorage.setItem(simKey(),JSON.stringify({ts:Date.now(),data}));}catch(e){} }
